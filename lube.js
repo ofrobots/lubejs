@@ -1,11 +1,5 @@
 // License: (MIT) or  (GPLv2 and above)
-// copyright lmao 2015 @icefapper. All rights reserved :) i mean it!
-// the violator ( henceforward referred to as "you")  or the violator's legal representative's (henceforwards referred to as "your representative")
-// ass might fall prone to an arbitrary amount of violation in case this copyright is violated
-// there is no warranty that this violation occurs at least immediately, so you need not panic if you find yourself having violated it
-// this copyright notice might 
-// change at any moment
-// read it well then 
+
 
 ( function (exports) {   
 'use strict'
