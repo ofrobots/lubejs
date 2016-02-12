@@ -464,6 +464,8 @@ lp.readAnIdentifierToken = function ( v ) {
     var c = this.c, l = this.src, e = (l.length), peek, r;
     var n = c + 1; // the head is already supplied in v
 
+    var _n = { pDepth : 0, contents: null  , type: 'Identifier', value : null  , name : null }   ;
+
     while (true ) {
       if ( IDBody( peek = l.charCodeAt(++c) ) ) continue;
      
@@ -509,14 +511,16 @@ lp.readAnIdentifierToken = function ( v ) {
     }
 
     if ( !v ) {
-        v = l.substring(this.c, c);
+        _n . value = _n . name = _n . contents = v = l.substring(this.c, c);
         this.c = c;
-        return { pDepth : 0, contents: v, type: 'Identifier', value : v, name : v };
+        
+        return _n ;
     }
     
     this.c = c;
     if ( n < c ) v += l . substring(n, c);
-    return { pDepth : 0, contents: v, type: 'Identifier', value : v, name : v };
+    _n . value = _n . name = _n . contents = v    ;
+    return _n ;
 };
 
 lp.readNumberLiteral = function (peek) {
@@ -525,7 +529,7 @@ lp.readNumberLiteral = function (peek) {
       e = l.length,
       r = 10,
       v = 0,
-      n = { contents: null, type : 'Literal' };
+      n = { contents: null, type : 'Literal', start : this.c, loc : { start :    {  line : li, column: col }, end: null } }  ;
 
   if (peek ===  48) {
     r = l.charCodeAt(++c);
@@ -636,6 +640,8 @@ lp.readStrLiteral = function (start) {
       _e ;
 
   var v = "", v_start = c;
+  var str = { contents: null, type: 'Literal', value : null  }    ;
+
   while (c < e && (i = l.charCodeAt(c)) !== start) {
     switch ( i ) {
       case  92 : 
@@ -700,8 +706,9 @@ lp.readStrLiteral = function (start) {
   if ( v_start !==c ) { v += l.substring(v_start, c ); }
   this.c = c;
   if (!(c < e && (l.charCodeAt(c)) === start)) { this.err('s lit open'); }
-  ++this.c;
-  return { contents: null, type: 'Literal', value : v };
+  ++this.c; str.value   =  v ;
+  
+  return str ;
 };
 
 lp . readDot = function() {
@@ -1736,7 +1743,7 @@ lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
         head  .     prefix  =  true   ;
         head  .     type   =  'UnaryExpression' ; 
         head  .     operator = this.next().contents ;
-        head. argument = core( this.parseNonSeqExpr(this.parseExprHead(),0xAE, cFlags_For_Sh_Non_Ex &  2   )), 
+        head. argument = core( this.parseNonSeqExpr(this.parseExprHead(),0xAE, cFlags_For_Sh_Non_Ex &  2   ))  ; 
 
         return this.end(head );
      }
@@ -1850,17 +1857,19 @@ lp.parseNewHead = function () {
   if ( this. startStmt ) this.startStmt = false;
 
   var n; 
-  var e = this.next ();
+  var e = this.start ( this. peek   )  ;
+  this.next ();
 
   if ( this. peek. contents === '.' ) {
-    this.next ();
-    n = this.start ({
-      type : 'MetaProperty',
-      meta : e,
-      loc : {}
-    }, e );
+    n  = this.start ( this. peek ) ;
+    this.end ( e ) ;
+    this.next   () ;
+  
+   
+    n.  type = 'MetaProperty';
+    n.  meta = e ;
 
-    if ( this. peek. type === 'Identifier' && ( e= this.next() ).contents === 'target' ) return (this.end(n, n. property = e ) );
+    if ( this. peek. type === 'Identifier' && ( e= this.next() ).contents === 'target' )  {  n. property = e   ;    this.end(n ) ;   }
     this.err( 'found ' +     e . contents + ', not target ' );
    }
 
@@ -1908,63 +1917,55 @@ lp.parseNewHead = function () {
         head    = this.end(n );
         continue;
 
-
        case '(':
           this.next();
-         
           e. type= 'NewExpression';
           e. callee = n           ;
           e. arguments = this. parseArgList() ;
-
-          return this.end (e, this.expect(')'));
+          this.expect(')');
+          return this.end (e);
 
         case '`' :
 
-             head = n = this.start ({
+             n = {
                   type : 'quasi',
                   quasi : this . parseTemplateLiteral (),
-                  loc : {},
+                  start : head. start ,
+                  loc : { start : head.loc.start },
                   tag : n
-              }, head );
+              }  ;
 
-              this.end (head, head.quasi );
+              head =  this.end (n );
               continue; 
     
         default:
                 e. type = 'NewExpression';
                 e. callee = n; 
-     	   e. arguments = [];
+                e. arguments = [];
  
-                return this.end (e, head );
-
+                return this.end (e   )  ;
      }
   } 
 };
 
 lp.id = function (n) {
   if ( this.startStmt ) this.startStmt = false;
-
-return this.next (); 
+  return this.next (); 
 };
 
 lp . parseSpreadElement = function() {
-    
-     var n = this.start ({
-           type : 'SpreadElement',
-           loc : {}
-     }, this.next () ); 
- 
-     var e;
-     n. argument = core (e = this.parseNonSeqExpr( this.parseExprHead(), 0, 0 ) );
-
-return (this.end ( n, e) );
+    var n = this.start ( this. peek ) ;  
+    n. type  = 'SpreadElement';
+    this.next () ; 
+    n. argument = core ( this.parseNonSeqExpr( this.parseExprHead(), 0, 0 ) );
+    return this.end ( n) ;
 };
 
 lp.parseArrayExpression = function (cFlags_Sh_Non ) {
   var e = [], _e;
  
-  var n = this.next ();
-                  
+  var n = this.start ( this. peek ) ;
+  this.next ();                  
   n. type = 'ArrayExpression';
   n. elements = e  ;
   n. pDepth = 0;
@@ -2007,8 +2008,9 @@ lp.parseArrayExpression = function (cFlags_Sh_Non ) {
   if ( hasPropThatMustNot ) this. mustNot = hasPropThatMustNot; 
 
   n.sprCount = sprCount, n.sprIdx = sprIdx;
+  this.expect(']')  ;
 
-return this.end(n, this.expect(']'));
+return this.end(n );
 };
 
 lp.convList = function(nexpr) {
@@ -2061,19 +2063,12 @@ lp.convAssig = function( nexpr, isB ) {
      
      switch ( nexpr. type ) {
        case 'Identifier' :
-                            
-
-         if ( this. tightness ) switch ( nexpr .   value ) { case 'eval' : case 'arguments' : this.err (        nexpr .   value + ' is not an arg ' )  ;  }
-
          if ( isB ) {
            if ( nexpr . pDepth ) {
              this.convErr = 'an identifier must not be in parens when used as in a var def position'; 
              return nexpr;
            }
-           if ( this. vnames [ r  =  nexpr . value +  '%' ] ) this.err ( nexpr . value   +   '  already in the arglist   '  ) ;
-           this. vnames[r] = VAR_ALREADY_IN_ARG_LIST   ;
          }     
-
          nexpr . isB = true; 
          return;
 
@@ -2168,24 +2163,22 @@ return nexpr;
 
 lp.parseArgList = function () {
     var n = [], e;
-
     while ( true ) {
        if ( this. peek. contents === '...' ) { n. push( this. parseSpreadElement () ); }
        else if ( e = this. parseExprHeadOrYield () ) { n. push (core ( this. parseNonSeqExpr ( e, 0, 0) ) ); }
        else break;
      
        if ( this.peek.contents === ',' ) { this.next (); continue; }
-              
        break;
     }
-
-return n;
+    return n;
 };
 
 lp.parseObjectExpression = function (cFlags_Sh_Non ) {
   var prop = [], e, n;
 
-  n = this.next ();
+  n = this.start ( this. peek ) ;
+  this.next ();
   n. type = 'ObjectExpression',
   n. pDepth = 0;
 
@@ -2195,102 +2188,90 @@ lp.parseObjectExpression = function (cFlags_Sh_Non ) {
 
   while ( e = this.parseProperty(p)) {
      prop .push(e);
-
      if ( this. propThatMustBeInAnAssig ) {
         if ( !propThatMustBeInAnAssig ) { propThatMustBeInAnAssig = this. propThatMustBeInAnAssig; p =  1  ; }
         this. propThatMustBeInAnAssig = null;
      }
-
      else if ( this. mustNot ) {
        if ( !hasPropThatMustNot ) { 
              hasPropThatMustNot = this. mustNot;
              p =  8 ;
        } 
-
        this. mustNot = false;
      }
-
      if ( this.peek. contents === (',' ) ) { this.next (); continue; }
      break;
   }
 
-  n .properties = (prop );
-
+  n .properties = prop;
   if ( propThatMustBeInAnAssig ) this. propThatMustBeInAnAssig = propThatMustBeInAnAssig;
   else if ( hasPropThatMustNot ) { this. mustNot = hasPropThatMustNot; }
+  this.expect('}');
 
-return this.end(n, this.expect('}'));
+  return this.end(n);
 };
 
 lp.parseParen = function () {
-  var r, argListBecause = null, n = this.next(); 
-                                var e; 
-
-  e = this.parseExprHeadOrYield ();
+  var r, argListBecause = null, n = this.start ( this. peek ) ;
+  this.next(); 
+                               
+  var e = this.parseExprHeadOrYield ();
   if ( e ) {
     this.canHaveNoAssig = true;
     e = this. parseNonSeqExpr ( e, 0, 0 );
-
     if (this.propThatMustBeInAnAssig ) {
-
-       
        if ( this. peek. contents === ')' ) {
           if ( e.type !=='(' ) e. pDepth = 1;
           else e = e.expr, e. pDepth ++; 
 
-          this.prepareArgs   (true ) ; 
+          this.prepareArgs (true ) ; 
           this.funcBecause = e;
 
-       return n. expr = (e ), this.end(n, this.expect( ')' ) );
+          return n. expr = (e ), this.end(n, this.expect( ')' ) );
        }
 
-       this. prepareArgs   ( ( true ) ) ; 
+       this. prepareArgs  (true ) ; 
        if ( r = this. convAssig(e, true ) ) { this.err(e . type + ' can\'t be a def; reason: ' + this.convErr ); } 
-
        argListBecause = e;
        this. propThatMustBeInAnAssig = null;
     } 
 
     if ( this. peek. contents === ',' ) {
-      
-       e = this.start ({
+       e = {
          type : 'SequenceExpression',
          expressions : [core(e)],
-         loc: {}
-       }, e );
-
-       e .pDepth = ( 1);
+         start : e.start ,
+         loc:  { start : e.loc.start }
+       };
+       e .pDepth =1;
  
        var head;
        do {
          this.next ();
-        
          if ( this. peek. contents === '...' ) {
             if ( !argListBecause ) this. prepareArgs   ( true ) ; 
             if ( r = this.convList(e) ) this.err( e. type + ' can\'t be a param; reason : ' + this.convErr, r );
             r = this. peek;
-
-
             e.expressions . push ( this.parseRestElement () );
             this.funcBecause = r; 
-            this.expect ( ')');
-           
+            this.expect (')');
             n. expr = e;
-
-          return n;
+            return n;
           }
 
           if ( argListBecause ) {
             var ptrn = this. parsePattern   ();
             if ( '=' === this. peek. contents ) { 
                this.next () 
-               ptrn = this.start ({
+               ptrn = {
                     type : 'AssignmentPattern',
                     left : ptrn,
-                    loc : {}
-               }, ptrn ); 
+                    start :ptrn.start ,  
+                    loc : { start : ptrn.loc.start }
+               }; 
                
-               ptrn. right = core ( r = this.parseNonSeqExpr (this .parseExprHeadOrYield (), 0, ( ( 0) ) ) ); head = (this.end(ptrn, r ) );
+               ptrn. right = core (this.parseNonSeqExpr (this .parseExprHeadOrYield (), 0, 0 ) );
+               head = this.end(ptrn );
             }
 
             else
@@ -2299,103 +2280,96 @@ lp.parseParen = function () {
 
           else {
               head = this. parseExprHeadOrYield () || this.err( this. peek . type + ' is not a valid start for an expr ' );
-
               this.canHaveNoAssig = true;
               head = this. parseNonSeqExpr ( head,0,0 );
               if ( this. propThatMustBeInAnAssig ) {
                   this. prepareArgs   () ;
-
                   if ( r = this. convAssig(head, true ) ) this.err(head.type+' can\'t be a def; reason : ' + this.convErr );
                   if ( r = this. convList (e ) ) this.err(e.type+ ' can\'t be a param; reason : ' + this.convErr );
-
                   argListBecause = head;
                   this. propThatMustBeInAnAssig = null;
               }
-
           } 
 
-          e. expressions.push ( core( ( head ) ) );
+          e. expressions.push ( core(head ) );
 
        } while ( this. peek. contents === (',' ) );
+       if ( !argListBecause ) this.end ( e )  ;
     }
 
     if ( e. type !=='(' ) e. pDepth = 1; 
     else { e = e .expr; e .pDepth ++; } 
-
     n.expr = e;
     if ( argListBecause ) this.funcBecause = argListBecause;
-  
-  return this.end(n, this.expect(')' ) );
+    this.expect(')' );
+    return this.end(n );
   }
 
   else switch ( this. peek. contents ) {
         case ')' :
            r = this.next ();
-           n.expr = {
-             type : 'SequenceExpression',
-             expressions : []
-           };
-
+           n.expr = { type : 'SequenceExpression',  expressions : []  };
            this.funcBecause = r;
            return n;
 
         case '...' :
-          this.funcBecause = this . peek; this.prepareArgs   () ; 
+          this.funcBecause = this . peek;
+          this.prepareArgs   () ; 
           n.expr = this. parseRestElement ();
           this.expect ( ')'  );
           return n;
 
         default : this. err ( 'Unexpected ' + this. peek. type );
-
   }
+
 };
 
 lp . parseVariableDeclaration = function(kind, cFlags_For ) {
-
-     if ( this.startStmt ) this.startStmt = false;
-     else  if ( ! ( cFlags_For &  2  ) ) { this.err ( kind + 'is not a vaild name ' ); }
+  if ( this.startStmt ) this.startStmt = false;
+  else  if ( ! ( cFlags_For &  2  ) ) { this.err ( kind + 'is not a vaild name ' ); }
  
-     var dec = [];
-     var n = this.next ();
+  var dec = [];
+  var n = this.next ();
+  
+  n. declarations = dec,
+  n. type= 'VariableDeclaration',
+  n. kind= kind;   
+  
+  var e = this.parseVariableDeclarator(cFlags_For );
+  if ( !e ) this.err(( 'must dec' ) ); 
+
+  do { 
+      dec.push (e);
+      if ( this.peek.contents !==',' )
+         break;
      
-     n. declarations = dec,
-     n. type= 'VariableDeclaration',
-     n. kind= kind;   
-     
-     var e = this.parseVariableDeclarator(cFlags_For );
-     if ( !e ) this.err(( 'must dec' ) ); 
+      this.next();
+      e = this.parseVariableDeclarator(cFlags_For ); 
+  } while ( e ) ;
 
-     do { 
-         dec.push (e);
-         if ( this.peek.contents !==',' )
-            break;
-        
-         this.next();
-         e = this.parseVariableDeclarator(cFlags_For ); 
-     } while ( e ) ;
+  if ( ! ( cFlags_For &  2  ) ) {
+    this.foundStmt = true;
+    return this.semi(n );
+  }
 
-     if ( ! ( cFlags_For &  2  ) ) {
-       this.foundStmt = true;
-       e = this.semi ();
-     }
-
-   return this.end ( n, e || ( dec[dec.length-1 ] ) );
+  return this.end ( n );
 }
 
 lp . parseVariableDeclarator = function(cFlags_For ) {
-   var n = this.parsePattern  (), e = null; // console.log( n, "N", "N", this. peek ); 
+   var n = this.parsePattern  (); // console.log( n, "N", "N", this. peek ); 
    if ( n ) {
-       n = this.start ( {
+       n =  {
          type : 'VariableDeclarator',
          id : n,
-         loc : {},
+         start : n.start,
+         loc : { start : n.loc.start },
          init : this.peek.contents === '=' ? (this.next(),
-                                             core (e  =  this. parseNonSeqExpr(this.parseExprHeadOrYield(),0, cFlags_For ) ) ) : 
+                                             core (  this. parseNonSeqExpr(this.parseExprHeadOrYield(),0, cFlags_For ) ) ) : 
                 n.  type !== 'Identifier' ? (this.expect ('=' ),
-                                             core (e  =  this. parseNonSeqExpr(this.parseExprHeadOrYield   (), 0, cFlags_For )  ) )  : null,
-       }, n); 
+                                             core (  this. parseNonSeqExpr(this.parseExprHeadOrYield   (), 0, cFlags_For )  ) )  : null,
+       }; 
 
-       return this.end ( n, e || n. id );
+       return this.end ( n );
    }
 } ; 
 
@@ -2421,27 +2395,20 @@ lp . parseFor = function() {
      case 'of' : _in = false;
      case 'in' :
         if ( this. mustNot ) { this.err ( e. type + ' is not an assig ' );} 
-
         if ( e. type === 'VariableDeclaration' ) {
            if ( e. declarations.length !==1 ) this.err ( e. kind + ' must not have more than one decl in case it is in a for/in' );
         }
 
-        else {
+        else  {
           if ( this . propThatMustBeInAnAssig ) this. propThatMustBeInAnAssig = null;
-
           var convErr = this.convAssig ( e);
           if ( convErr ) this.err ( e. type + ' is not an assig; reason ' + this.convErr );
        }
        
        this.next();
- 
-       n = this.start ( {
-         type : 'ForInStatement',
-         left : e,
-         loc :       {},
-         right :  ( _in ? core( this.parseExpr() ) : core ( this. parseNonSeqExpr(this. parseExprHead(), 0,0) )  )
-       }, n );
-
+       n.  type = 'ForInStatement';
+       n.  left = e;
+       n.  right =  ( _in ? core( this.parseExpr() ) : core ( this. parseNonSeqExpr(this. parseExprHead(), 0,0) )  );
        break;
 
      default :
@@ -2452,36 +2419,29 @@ lp . parseFor = function() {
 
         this. expect (';' ); 
 
-        n = this.start ( {
-          type: 'ForStatement',
-          init : e, 
-          loc : {} ,  
-          test : this.peek.contents === ';' ? null :(core ( this.parseExpr ()   )  )
-        }, n );
-
+        n.  type   = 'ForStatement';
+        n.  test = this.peek.contents === ';' ? null :(core ( this.parseExpr ()   )  )
+        n.  init = e; 
         this.expect(';' );
         e = this. parseExprHead() || null;
-        n . update = e &&                    core(  this.parseExpr (e)   )  ; 
+        n . update = e && core(  this.parseExpr (e)   )  ; 
     }
 
     this. expect ( ')' );
-
     ++ this. iteD;
     var scopeFlags = this.scopeFlags;
     this.scopeFlags |= (  4 | 8  );
-    n = this.end(n, n. body = this.parseStatement () );
-
+    n. body = this.parseStatement ()   ;
     this.scopeFlags = scopeFlags;
     -- ( this. iteD );
 
-return n;
+return this.end (  n   ) ;
 }
 
 var core = function(n ) { return ( ( n . type === '(' ? n.expr : n )); } 
 var coreBrack = function(n) { return n. type === '[' ? n. expr : n   }
 
 lp.parseProperty = function (cmn) {
-
   var e, Prop = ( cmn ===  0x010  ) ? 'MethodDefinition' : 'Property', n = null;
   switch ( this. peek. type ) {
     case 'Identifier' : { n = this. peek. value;} break;
@@ -2494,78 +2454,93 @@ lp.parseProperty = function (cmn) {
   while ( true ) 
     switch ( n ) { 
       case 'get':
-        n = this.next();
-       
+        n = (_static) || (this.peek)  ;
+        this.next();
         if (e = this.parseMemName()) {
-           if ( cmn &  1   ) this.err('get' ); 
-     
-           n = this.start ( { type : Prop,  key : coreBrack (e), kind : 'get', computed : ( e. type === '[' ), loc : {} }, _static || n);
-
+           if ( cmn & 1 ) this.err('get' ); 
+           n. type = Prop;
+           n.  key = coreBrack (e);
+           n.  kind = 'get';
+           n. computed = ( e. type === '[' );
 
            if ( cmn !== 0x010  ) {  n.shorthand =false; n. method= false;   }
            else n.static = _static !==null      ;
-
-           this.end(n, n.value = this.parseArgsAndBody(0, this.start ( { 
+          
+           n.value = this.parseArgsAndBody(0, { 
                 type : 'FunctionExpression',
                   id : coreBrack(e),
-                 loc : {},
+               start : e.start ,
+                 loc : { start : e.loc.start },
            generator : false
-           }, e ) ) );
+           } );
+           if ( cmn !== 0x010  ) this. mustNot = true;       
 
-           if ( cmn !== 0x010  ) this. mustNot = true;
-       
-        return n  ;
+           return this.end   (  n )  ;
         }
 
         break L;
 
     case 'set':
 
-      n = this.next();
+      n =  (_static) || (this.peek   )   ;
+      this.next();
       if ( e = this.parseMemName()) {
-         if ( cmn &  1   ) this.err('set' ); 
-         n = this.start ( { type : Prop,  key : coreBrack (e), kind : 'set', loc: {}}, n ); 
+         if ( cmn &  1 ) this.err('set' ); 
+         n. type = Prop;
+         n.   key= coreBrack (e);
+         n. kind = 'set'; 
+         n. computed = ( e .type === '[' ); 
 
          if ( cmn !== 0x010  ) n. method = n. shorthand = false;
          else n.static = _static !==null; 
-
-         n. computed = ( e .type === '[' ); 
-         this.end(n, n. value = this.parseArgsAndBody(1, this.start ( {
-           type : 'FunctionExpression',
-           id : coreBrack(e),
-           loc : {},
-           generator : false
-         }, e) ) );
-
+       
+         n. value = this.parseArgsAndBody(1, {
+              type : 'FunctionExpression',
+                id : coreBrack(e),
+             start : e.start ,
+               loc :   { start : e.loc.start },
+         generator : false
+         } );
          if ( cmn !== 0x010  ) this. mustNot = true;
 
-      return n
+         return this.end   ( n )   ;
       }
 
       break L;
 
     case '*':
-      if ( cmn &  1   ) this.err('sh and * ' ); 
+      if ( cmn & 1 ) this.err('sh and * ' ); 
+      n = _static || this.start ( this. peek   )  ;
+      this.next();
+      if (  e = this.parseMemName() ) {   
+        n.  type    = Prop;
+        n.computed = e. type === '[';
+        n.  key = coreBrack(e);
+       
+        n. value  = this. parseArgsAndBody(-1,  {
+             type :'FunctionExpression',
+               id : coreBrack (e) ,
+            start : e.start ,
+              loc : { start : e.loc.start },
+        generator : true
+        }) ;
 
-      n = this.next();
-      e = this.parseMemName() || this.err('[ or and expr expcted', this.peek );
-  
-      n = this.start ({ type : Prop, key : coreBrack(e), kind : ( cmn ===  0x010  ?
-                                                                  (n.contents === 'constructor' && this.err('can not be a g ' ) ) || ( 'method' ) :
-                                                                  'init'
- 
-                                                       ),
-        loc : {}
-      }, n);
+        if ( cmn ===  0x010   )  {
+           if (n.contents === 'constructor'  ) this.err('can not be a g ' ) ;
+           n.  kind = 'method';
+           n.static = _static !==null ; 
+        }
+        else {
+           n.method = true; 
+           n.shorthand = false;  
+           n.  kind = 'init' ;
+           this. mustNot = true;   
+        }
     
-      n.computed = e. type === '[';
-      if ( cmn !== 0x010  ) {  n.method = true;  n.shorthand = false;   }
-
-      this.end(n, n. value = this. parseArgsAndBody(-1, this.start ( { type :'FunctionExpression', id :   ( coreBrack (e)   )  , loc : {}, generator : true }, e ) ) );
-      if ( cmn !== 0x010  ) this. mustNot = true;
-      else n.static = _static !==null
-     
-      return n  ;
+        return this.end ( n   )  ;
+      }
+   
+      this.err('[ or and expr expcted', this.peek );
 
        case 'static' :
           if ( cmn ===  0x010  && !_static ) {
@@ -2589,225 +2564,204 @@ lp.parseProperty = function (cmn) {
   switch (this.peek.type) {
     case '(':
        if ( cmn &  1   ) this.err('paren ' ); 
-
-       n = this.start ( {
+       n = {
          type: Prop,
          key : coreBrack (n),
-         kind : ( cmn ===  0x010  ? n.contents === 'constructor'? 'constructor' : ( 'method' ) : 'init' ),
-         computed : n. type === '[', loc : {},
-         value : this . parseArgsAndBody(-1, this.start ( {
+         start : n.start ,
+         loc : { start : n.loc.start   }  , 
+         kind : ( cmn ===  0x010  ? n.contents === 'constructor'? 'constructor' :  'method'  : 'init' ),
+         computed : n. type === '[',
+
+         value : this . parseArgsAndBody(-1, {
                type : 'FunctionExpression',
                id : coreBrack (n),
-               loc : {},
+            start : n.start ,
+               loc : { start : n.loc.start },
                generator : false
-         }, n) )
-       }, n);
- 
-       if ( cmn !== 0x010  ) {  n. method = true;  n. shorthand = false;   }
+         } )
+       };
+       if ( cmn !== 0x010  ) { this. mustNot = true; n. method = true;  n. shorthand = false;   }
        else n.static = _static !==null      ;
-  
-       if ( cmn !== 0x010  ) this. mustNot = true;
- 
        return this.end (n, n . value );
  
      case ':':
-       cmn ===  0x010  && this.err( 'Unexpected ' + this. peek. contents );
-
-
+       if ( cmn ===  0x010   )
+         this.err( 'Unexpected ' + this. peek. contents );
+      
        e = n;
-       n = this.start ( this.next(), e); 
-       n . type = 'Property',
-       n . key = coreBrack (e), 
-       n . kind = 'init',
-       n . computed = e . type === '[',
- 
-       n .method = false;
-       n .shorthand = false;
+       n = ( this.next()); 
+
+       n  . type = 'Property';
+       n  . key = coreBrack (e);
+       n  . start = e.start ;
+       n  . loc = { start : e.loc.start   }  ; 
+       n  . kind = 'init';
+       n  . computed = e . type === '[';
+       n  .method = false;
+       n  .shorthand = false;
 
        var head = ( this. parseExprHeadOrYield ()||this.err('must be an actual expr') );
-
        this.canHaveNoAssig = true;
-       n. value = core (e = this.parseNonSeqExpr( (head ), 0, 0) );
+       n. value = core(this.parseNonSeqExpr(head, 0, 0) );
+       return this.end (n)
 
-       return this.end (n, e)
 
     default : 
 
-      cmn ===  0x010  && this.err( 'Unexpected ' + this. peek. contents );
+      if ( cmn ===  0x010   )   this.err( 'Unexpected ' + this. peek. contents );
       var _r;
       e = n; 
          
       if (n. type !=='Identifier' ) this.err('id expcted'); 
+      if ( this. peek.contents === ('=' ) ) {
+        if ( cmn&  8  ) this. err( 'no' );
+        e =  {
+           left : n,
+           type : 'AssignmentPattern',
+          start : n.start , 
+            loc : { start : n.loc.start }
+        };
 
-        if ( this. peek.contents === ('=' ) ) {
-          if ( cmn&  8  ) this. err( 'no' );
-          e = this.start ( { left : n, type : 'AssignmentPattern', loc : {} }, n);
-          this.next ();  e . right = core ( _r = this. parseNonSeqExpr ( this. parseExprHeadOrYield(), 0,  0) ) ; 
-          this.end( e, _r ) ;
-
-          this. propThatMustBeInAnAssig = true;
-          n = this.start ( {type : 'AssignmentProperty', key : n, loc :{} }, n);
-        }
-
-        else { n = this.start ( {type : 'Property', key : n, loc :{} }, n); }
-
-        n.kind = 'init'; 
-        n.shorthand = true;
-        n. method = n. computed = false;
-
-      return this.end(n, n. value = e );
+        this.next ();
+        e . right = core (  this. parseNonSeqExpr ( this. parseExprHeadOrYield(), 0,  0) ) ; 
+        this.end( e  ) ;
+        this. propThatMustBeInAnAssig = true;
+        n =  {
+          type : 'AssignmentProperty',
+           key : n,
+         start : n.start ,
+           loc : { start : n.loc.start }
+        };
       }
+
+      else { n =  {type : 'Property', key : n, start : n. start ,  loc :{ start : n.loc.start } }; }
+
+      n.kind = 'init'; 
+      n.shorthand = true;
+      n. method = n. computed = false;
+      n. value = e ; 
+ 
+      return this.end(n );
+  }
 };
 
 lp.parseMemName = function() {
-      if ( this.peek.contents === '[' ) {
-          var e =  this.next(); 
-          e. expr  = core( this. parseNonSeqExpr (this. parseExprHeadOrYield ()||this.err('must be an actual expr'), 0, 0 )   )  ;
-
-      return this.end(e, this.expect (']' ) ); 
-      }
-
-return this.memID ();
+  if ( this.peek.contents === '[' ) {
+      var e = this.start(this. peek   ) ;
+      this.next(); 
+      e. expr  = core( this. parseNonSeqExpr (this. parseExprHeadOrYield ()||this.err('must be an actual expr'), 0, 0 )   )  ;
+      this.expect (']' ); 
+      return this.end(e ); 
+  }
+  return this.memID ();
 }
 
 lp . memID = function() { 
     switch ( this.peek.type ) {
       case 'Identifier' : 
-      case 'Literal' : return this.next ();
+      case 'Literal' : return this.end   (  this.next ()   )    ;
     } 
 }
 
-
 lp.parsePattern = function() {
-     switch ( this.peek.type ) {
-       case 'Identifier' :
-           if ( !iskw(this.peek) )  {
-              var n =  this.next ();
-              
-              if ( this. vnames ) {
-                 var r = n.value  + '%' ;
-                 if ( this.vnames.hasOwnProperty (  r    ) ) {
-                   switch  (  this.vnames[r] ) {
-                      case   2  :
-                         if ( this. vnames.immediateErr ) {        this.err ( n. value   +  ' already in the arglist   '  ) ;   }
-                         this.vnames[r] = 4  ; break ;
-                      case   8 : this.err ( n.value  + ' can not be def ' )  ;
-                   }
-                 }
- 
-                 else  {
-                    this.vnames[r] = 2 ;
-                 }
-              }
-
-              return n ;
-           
-       
-            }
-
-           
-            return ;
+   switch ( this.peek.type ) {
+     case 'Identifier' :
+         if ( !iskw(this.peek) )  {
+            var n =  this.next ();
+            return this.end   (   n   )   ;
+          }
+          return ;
   
-       case '[' : return this. parseArrayPattern  ();
-       case '{' : return this. parseObjectPattern ();
-     }
+     case '[' : return this. parseArrayPattern  ();
+     case '{' : return this. parseObjectPattern ();
    }
-
+}
 
 lp. parseArrayPattern = function() {
 
-    var _e = [],  n = this .next (); 
-                   n.    type =  'ArrayPattern';
-                   n.   elements = _e;
-
+    var _e = [],  n = this.start ( this. peek   )  ;
+    this .next (); 
+    n.    type =  'ArrayPattern';
+    n.   elements = _e;
     var e;
 
     L :
     while ( true ) {
-       
        if ( e = this. parsePattern   () ) {
-
-          if ( e. type === 'Identifier' && this. vnames ) {
-             var r =  e. value   +  ( '%' )  ; 
-             if ( this.vnames[r]    !==2  ) { this.err ( e. value + ' already in the arglist'   )           ;   }
-             this.vnames[r] = 8 ;
-          }
- 
           if ( this.peek.contents === '=' ) {
              this.next (); 
-             e = this.start ( {
+             e = {
                type : 'AssignmentPattern',
                left : e,
-               loc : {}
-             }, e );
-
-          var r;
-          e . right = core ( r = this.parseNonSeqExpr (this .parseExprHeadOrYield (), 0, ( ( 0) ) ) );
-
-          _e . push (this.end ( e, ( r ) ) );
+              start : e.start ,
+               loc :  { start : e.loc.start }
+             };
+             e  . right = core (this.parseNonSeqExpr (this .parseExprHeadOrYield (), 0, 0 ) );
+             _e . push (this.end (e));
           }
-
           else 
              _e . push (e );
-        }
- 
-        else if ( this. peek. contents === '...' ) { _e .push (this. parseRestElement () );     break;  }
-        
-        else
+       }
+       else if ( this. peek. contents === '...' ) { _e .push (this. parseRestElement () ); break;  }
+       else
            _e . push( null );
-
           
-      if ( this.peek.contents           ===    ',' ) { this.next ();  continue  ;    }
-      break;
-
-
+       if ( this.peek.contents  ===    ',' ) { this.next ();  continue  ;    }
+       break;
     }
-
-return this.end (n, this.expect (']') ) ;
+    this.expect (']')   ;
+   
+    return this.end (n) ;
 }
 
 lp.parseObjectPattern  = function() {
-    var prop = [];
-    var n = this.next ()  ;   
+    var prop = [], n = this.start ( this. peek   )  ;
+    this.next ()  ;   
 
     n. type = 'ObjectPattern' ;
     n. properties =  prop;
 
     var e;
-
     var v, _n;
 
     while ( _n = this. parseMemName() ) {
-        e = this.start ( {type : 'AssignmentProperty', key : coreBrack (_n ), loc : {}, computed : _n . type === '(', method : false  }, _n);
+        e = {
+            type : 'AssignmentProperty',
+             key : coreBrack (_n ),
+           start : _n . start ,  
+             loc :  { start : _n . loc. start  },
+        computed : _n . type === '(', method : false 
+        };
         e. kind = "init"; 
 
         if ( this.peek.contents === ':' ) { this.next(); v = this.parsePattern   ();}
-        else { _n .type !=='Identifier' && this.err('id' ); v = _n; e.shorthand = true;}
+        else { 
+          if ( _n .type !=='Identifier' )
+             this.err('id' );
 
-        if        ( e. type === 'Identifier' && this. vnames ) {
-             var r =  e. value   +  ( '%' )  ; 
-             if ( this.vnames[r]    !== 2  ) { this.err ( e. value + ' already in the arglist'   )           ;   }
-             this.vnames[r] = 8 ;
-          }
+          v = _n;
+          e.shorthand = true;
+        }
       
         if ( this.peek.contents === '=' ) {
              this.next();
-             v = this.start ( {
+             v = {
                type : 'AssignmentPattern', 
                left : v,
-               loc : {}, 
-               right : core (_n = this. parseNonSeqExpr(this. parseExprHeadOrYield (), 0, 0) ) 
-             }, v );
-
-             this.end (v, (_n) );
+              start : v.start ,  
+                loc : { start : v.loc.start      }, 
+              right : core ( this. parseNonSeqExpr(this. parseExprHeadOrYield (), 0, 0) ) 
+             };
         }
-
-        prop. push (this.end(e, e.value = v )); 
-
+        e.value = v ;
+        prop. push (this.end(e)); 
+       
         if ( this.peek.contents === ',' ) { this.next (); continue; }
     }
+    
+    this.expect('}' );
 
-return this.end(n, this.expect('}' ) );
+    return this.end(n);
 } 
 
 lp . prepareArgs = function(immediateErr ) { this.vnames = { prev: this.vnames, immediateErr: immediateErr } ;  }
@@ -2833,42 +2787,26 @@ lp . parseArgsAndBody = function (argLen, n, cFlags_For ) {
   this.expect('(');
   while ( argLen-- !==0 && (_n = this.parsePattern  ()) ) {
     if (this.peek.contents === '=' )  {
-        if ( _n . type ==                                        'Identifier' ) {
-          r  = _n . value +   '%' ;
-          if ( this. vnames[r]  ==   (       2 )   ) this. vnames[r] = 8 ;
-          else 
-             this.err ( _n . value + ' already in the arglist ' )  ; 
-         }
-
         _n = this.parseAssig (_n);
     }
     e.push(_n);
-    if (this.peek.contents === ',') {
-      this.next();
-      continue;
-    }
-
-  break;
+    if (this.peek.contents === ',') {  this.next(); continue;  }
+    break;
   }
 
   if ( argLen && this.peek.contents === '...') { e. push (this. parseRestElement () ); }
-
   this.expect(')' );
-
   r  = this. scopeFlags ;
   if ( n. generator ) r |=  0x010  ;
- 
-  if ( this.peek.contents === '{' ) { _n =  n. body = ( this . parseFuncBody() )   ;  }
 
-  else  n. body = core(
-      _n = this.parseNonSeqExpr(
+  if ( this.peek.contents === '{' ) {  n. body = ( this . parseFuncBody() )   ;  }
+  else  n. body = core( this.parseNonSeqExpr(
                  this. parseExprHeadOrYield () || this.err('Unexpected ' + this. peek. contents ), 0, cFlags_For
            )
   ) ;
 
   this.scopeFlags = r  ;
-
-return (this.end(n, _n) );
+  return (this.end(n, _n) );
 }
 
 lp.parseRestElement = function() {
@@ -2884,30 +2822,24 @@ lp.parseRestElement = function() {
 
 lp.parseFuncBody = function() {
 
-     var a = null ;
-     if ( this. vnames ) {
-        a  = this.vnames;
-        this. vnames = null ;
-      }
-
      var scopeFlags = this.scopeFlags;
      if ( scopeFlags & 0x020 ) {
          if ( scopeFlags &  2  ) this.scopeFlags =  2 ;
          else this.scopeFlags = ( 0x020 |  2  );
      }
-
      else
        this.scopeFlags =  2 ;
 
-     if ( scopeFlags &  0x010  ) this.scopeFlags |= (       0x010    )  ;
+     if ( scopeFlags &  0x010  ) this.scopeFlags |= 0x010 ;
  
-
      var stmts = [],
          stmt,
-         n = this.start ( { type : 'BlockStatement', body : stmts, loc : {} }, this.next () ),
+         n = this.start ( this. peek   )  , 
          l = this.lbn,
          iteD = this. iteD;
-
+     this.next ()   ;
+     n.  type  = 'BlockStatement';
+     n.  body  =  stmts;
      this.lbn = {};
      this. iteD = 0;
 
@@ -2934,17 +2866,13 @@ lp.parseFuncBody = function() {
          stmts . push( stmt );
      }
 
-
      while (stmt = this.parseStatement ())  stmts .push ( stmt );
-
      this.lbn =l ;
      this. iteD   = iteD ;
      this.scopeFlags = scopeFlags;
      this. tightness && -- this. tightness;   
-
-     if ( a ) this.vnames = a. prev ;
-
-return this.end ( n, this.expect ( '}' ) ); 
+     this.expect ( '}' )  ;
+     return this.end ( n ); 
 }
 
 var loc = function(n ) {
