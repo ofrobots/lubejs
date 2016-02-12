@@ -1,9 +1,10 @@
 // License: (MIT) or  (GPLv2 and above)
 
 
-'use strict'
+( function (exports) {   
+  'use strict'
 
-var Prser = function (src) {
+var Parser = function (src) {
 
   this.peek = 0;
   this.n = 0;
@@ -11,9 +12,9 @@ var Prser = function (src) {
   this.lbn = {};
   this.tightness = 0;
   this.src = src;
-  this.col = 0;
-  this.c = 0;
-  this.li = 1;
+  this.col = 0; this.colC =    0; this.col0 =  0;
+  this.c = 0;   this.cC   =    0; this.c0   =  0; 
+  this.li = 1;  this.liC  =  0;      this.li0  =  0;
   this.isScript = true ;
   this.scopeFlags = 0; 
   this.startStmt = false;
@@ -31,32 +32,21 @@ var Prser = function (src) {
 
 };
 
-
-  
-var _c = function (c) { return c.charCodeAt(0); };
 var ALL = 0;
 
-try { new RegExp ( "lube", "g" ); ALL |= /* g_o */ 2 ; } catch ( _r ) {}
-try { new RegExp ( "lube", "u" ); ALL |= /* u_o */ 4 ; } catch ( _r ) {} 
-try { new RegExp ( "lube", "y" ); ALL |= /* y_o */ 8 ; } catch ( _r ) {} 
-try { new RegExp ( "lube", "m" ); ALL |= /* m_o */ 0x020 ; } catch ( _r ) {} 
-try { new RegExp ( "lube", "i" ); ALL |= /* i_o */ 0x080 ; } catch ( _r ) {}
+try { new RegExp ( "lube", "g" ); ALL |=  2 ; } catch ( _r ) {}
+try { new RegExp ( "lube", "u" ); ALL |=  4 ; } catch ( _r ) {} 
+try { new RegExp ( "lube", "y" ); ALL |=  8 ; } catch ( _r ) {} 
+try { new RegExp ( "lube", "m" ); ALL |=  0x020 ; } catch ( _r ) {} 
+try { new RegExp ( "lube", "i" ); ALL |=  0x080 ; } catch ( _r ) {}
 
 
-var nameInit = 2,
-    nameGet = nameInit << 2,
-    nameSet = nameGet << 1,
-    nameVar = ( 1 ),
-    nameMethd = nameInit << ( ( 4) ); 
+var nameInit = 2, nameGet = 4, nameSet = 8, nameVar = 1, nameMethd = 0x010 ; 
 
-var Num, num = Num = function (c) { return (c >= /* _0 */ 48 && c <= /* _9 */ 57)};
-var num_hex = function (e) { return num(e) || (e >= /* _a */ 97 && e <= /* _f */ 102) || ((e) >= /* _A */ 65  && ((e) <= /* _F */ 70));};
-
-var isize = function () {
-  var i = (((0)));
-  while (0 < (1 << ((i++)))) if (i >= 512) return 8;
-  return i;
-}
+var isNum = function (c) { return (c >=  48 && c <=  57)};
+var num_hex = function (e) {
+     return isNum(e) || (e >=  97 && e <=  102) || (e  >=  65  &&  e <=  70);
+};
 
 var fromRunLenCodes = function (runLenArray, bitm ) {
   bitm = bitm || [];
@@ -70,9 +60,9 @@ var fromRunLenCodes = function (runLenArray, bitm ) {
  
    while (runLen--) {
 
-      while ((/* INTBITLEN */ 0x010  * (bitm.length)) < bitIdx) bitm.push(0); 
+      while (( 0x010  * (bitm.length)) < bitIdx) bitm.push(0); 
      
-      if (bit) bitm[bitIdx >> /* D_INTBITLEN */ 4 ] |= (1 << (/* M_INTBITLEN */ 15  & bitIdx));
+      if (bit) bitm[bitIdx >>  4 ] |= (1 << ( 15  & bitIdx));
 
       bitIdx++;
     }
@@ -89,34 +79,27 @@ var IDC_ = (fromRunLenCodes([0,183,1,719,1,4065,9,1640,1], fromRunLenCodes ( ( [
 
 
 var IDHead = function (c) {
-  return (c <= /* _z */ 0x07a && c >= /* _a */ 97) ||
-          c === /* _$ */ 36  ||
-         (c <= /* _Z */ 90  && c >= (/* _A */ 65 )) ||
-          c=== ( ( /* __ */ 95  ) )||
-         (IDS_[c >> /* D_INTBITLEN */ 4 ] & (1 << (c & /* M_INTBITLEN */ 15 )));
+  return (c <=  0x07a && c >=  97) ||
+          c ===  36  ||
+         (c <=  90  && c >= ( 65 )) ||
+          c===  95 ||
+         (IDS_[c >>  4 ] & (1 << (c &  15 )));
 };
 
 var IDBody = function (c) {
-  return (c <= /* _z */ 0x07a && c >= /* _a */ 97) ||
-          c === /* _$ */ 36  ||
-         (c <= /* _Z */ 90  && c >= (/* _A */ 65 )) ||
-         (c <= /* _9 */ 57 && c >= /* _0 */ 48) || (IDC_[c >> /* D_INTBITLEN */ 4 ] & (1 << (c & /* M_INTBITLEN */ 15 )));
+  return (c <=  0x07a && c >=  97) ||
+          c ===  36  ||
+         (c <=  90  && c >= ( 65 )) ||
+         (c <=  57 && c >=  48) || (IDC_[c >>  4 ] & (1 << (c &  15 )));
 };
 
 
 var _h = function(n) { return n.toString(0x010 ); }
-
-var lp = Prser.prototype;
-
-var TOK_C = { type : ',', contents : ',' };
+var lp = Parser.prototype;
 
 lp.nextraw = function () {
-
- var L = this.skipS();
-  if ( L ) {
-  
-  return L;
-  }
+  var L = this.skipS();
+  if ( L )  return L;
 
   var peek, n = 0, _c = this.c;
   var r; 
@@ -126,157 +109,166 @@ lp.nextraw = function () {
   var col = (this.col), li = this.li;
 
   if ( IDHead(peek) ) n = this.readAnIdentifierToken();
-  else if (Num(peek)) n = this.readNumberLiteral(peek);
+  else if (isNum(peek)) n = this.readNumberLiteral(peek);
   else {
     var c = this.c, l = this.src, e = l.length; 
  
     switch (peek) {
-      case /* _dq */ 34: case /* _sq */ 39: n = this.readStrLiteral(peek); break;
-      case /* _min */ 45:
-      case /* _add */ 43:
+      case  34:
+      case  39:
+        n = this.readStrLiteral(peek);
+        break;
+
+      case  45:
+      case  43:
         c++;
         r = l.charCodeAt ( c );
-        if ( r === /* _eq */ 61 ) { c ++, this.c=c; n = { contents: null, type : '=' }; break; }
+        if ( r ===  61 ) { c ++, this.c=c; n = { contents: null, type : '=' }; break; }
         if ( r === peek ){ c ++, n = { contents: null, type : null}; this.c=c; break; }
         this.c=c;
         n = { contents: null, type : null, prec : 0xA7 }; 
         break;
 
-      case /* _dot */ 46: n = this.readDot (); break;
-      case /* _eq */ 61: 
+      case  46: n = this.readDot (); break;
+      case  61: 
          c++;
-
-         if ( l.charCodeAt(c ) === /* _eq */ 61 ) {
+         if ( l.charCodeAt(c ) ===  61 ) {
            c++;
-           if ( l.charCodeAt(c ) === /* _eq */ 61 ) c++;
+           if ( l.charCodeAt(c ) ===  61 ) c++;
            this.c=c; 
            n = { contents: null, type : 'op', prec : 0x5D };
            break;
          }
 
-         else if ( l.charCodeAt ( c ) === /* _grea */ 62 ) c++; 
+         else if ( l.charCodeAt ( c ) ===  62 ) c++; 
         
          this.c=c;
          n = { contents: null, type: '=' }; break;
 
-      case /* _less */ 60:
+      case  60:
          c++;
-
-         if ( l.charCodeAt(c ) === /* _less */ 60 ) {
+         if ( l.charCodeAt(c ) ===  60 ) {
              c++;
-             if ( l.charCodeAt(c ) === /* _eq */ 61 ) { c++; n = { contents: null, type : '=' }; } 
+             if ( l.charCodeAt(c ) ===  61 ) { c++; n = { contents: null, type : '=' }; } 
              else n = { contents: null, type: 'op', prec: 0xA5 };
-
              this.c=c; 
              break
-          }
-
-          if ( l.charCodeAt ( c ) === /* _eq */ 61 ) c++;
-          
-          this.c=c;
-          n = { contents: null, type: 'op', prec: 0x9B }; break;
-
-      case /* _grea */ 62:
-         c++;
-
-         if ( l.charCodeAt(c ) === peek ) {
-           c++;
-           if ( l.charCodeAt ( c ) === peek ) c++;
-           if ( l.charCodeAt(c ) === /* _eq */ 61 ) { c++; n = { contents: null, type : '=' }; }
-           else n = { contents: null, type: 'op', prec: 0xA5 };
-           this.c=c; break;;
          }
 
-         if ( l.charCodeAt ( c ) === /* _eq */ 61 ) c++;
-        
+         if ( l.charCodeAt ( c ) ===  61 ) c++;
+          
          this.c=c;
          n = { contents: null, type: 'op', prec: 0x9B }; break;
 
-      case /* _mul */ 42: if ( l.charCodeAt ( c+1 ) === peek ) c++; 
-      case /* _mod */ 37: 
+      case  62:
          c++;
-         if ( l.charCodeAt ( c ) === /* _eq */ 61 ) { c ++;n = { contents: null, type : '=' }; }
+         if ( l.charCodeAt(c ) === peek ) {
+           c++;
+           if ( l.charCodeAt ( c ) === peek ) c++;
+           if ( l.charCodeAt(c ) ===  61 ) { c++; n = { contents: null, type : '=' }; }
+           else n = { contents: null, type: 'op', prec: 0xA5 };
+           this.c=c;
+           break;;
+         }
+
+         if ( l.charCodeAt ( c ) ===  61 ) c++;
+         this.c=c;
+         n = { contents: null, type: 'op', prec: 0x9B }; break;
+
+      case  42:
+         if ( l.charCodeAt ( c+1 ) === peek ) c++; 
+      case  37: 
+         c++;
+         if ( l.charCodeAt ( c ) ===  61 ) { c ++;n = { contents: null, type : '=' }; }
          else n = { prec : 0xAD, contents: null, type : 'op' };
-        
          this.c=c; break;
 
-      case /* _exc */ 33:
+      case  33:
          c++;
-         if ( l.charCodeAt ( c ) === /* _eq */ 61 ) {
+         if ( l.charCodeAt ( c ) ===  61 ) {
              c ++;
-             if ( l.charCodeAt ( c ) === /* _eq */ 61 ) c ++;
+             if ( l.charCodeAt ( c ) ===  61 ) c ++;
              n = { prec : 0x5D, contents: null, type : ('op' ) }; 
-             this.c=c; break; 
+             this.c=c;
+             break; 
          }
 
          this.c=c;
-         n = { contents: null, type: null }; break;
+         n = { contents: null, type: null };
+         break ;
                                     
-      case /* _comp */ 126:
-            c++; this.c=c; n = { contents: null, type : null }; break; 
+      case  126:
+            c++;
+            this.c=c;
+            n = { contents: null, type : null };
+            break ; 
 
-      case /* _or */ 124:
+      case  124:
          c++; 
          switch ( l.charCodeAt ( c ) ) {
-            case /* _eq */ 61 : c ++; this.c=c; n = { contents: null, type : '=' }; break;
-            case /* _or */ 124 : c ++; this.c=c; n = { contents: null, type : 'op', prec : ( 0x09 ) }; break; 
+            case  61 : c ++; this.c=c; n = { contents: null, type : '=' }; break;
+            case  124 : c ++; this.c=c; n = { contents: null, type : 'op', prec : ( 0x09 ) }; break; 
             default : this.c=c; n = { contents: null, type : 'op', prec : 0x0D }; break;
          }
 
          break;
 
-      case /* _and */ 38:
+      case  38:
           c++;
           switch ( l.charCodeAt ( c ) ) {
-            case /* _eq */ 61 : c ++; this.c=c; n = { contents: null, type : '=' }; break;
-            case /* _and */ 38 : c ++; this.c=c; n = { contents: null, type : 'op', prec : ( 0x0B ) }; break;
+            case  61 : c ++; this.c=c; n = { contents: null, type : '=' }; break;
+            case  38 : c ++; this.c=c; n = { contents: null, type : 'op', prec : ( 0x0B ) }; break;
             default : this.c=c; n = { contents: null, type : 'op', prec : ( 0x01D ) }; break;
          }
 
          break;
 
-      case /* _xor */ 94:
+      case  94:
         c++;
-        if ( l.charCodeAt(c ) === /* _eq */ 61 ) {this.c = ++ c; n = { contents: null, type : ('=' ) }; break; }
+        if ( l.charCodeAt(c ) ===  61 ) {this.c = ++ c; n = { contents: null, type : ('=' ) }; break; }
           this.c=c; n = { prec : (0x01B ), loc : {}, contents: null, type : 'op' }; 
 
          break; 
 
-// case /* _com */ 44: this.c++; return TOK_C;
+// case  44: this.c++; return TOK_C;
 
       default:
         var mustBeAnID = 0;
 
         this.c=c; 
 
-        if (/* _bs */ 92 === peek) {
+        if ( 92 === peek) {
           mustBeAnID = 1;
           peek = l.charCodeAt(++ this. c);
-          if (peek !==/* _u */ 117) this.err('u');
+          if (peek !== 117) this.err('u');
           peek = this.peekUSeq();
         }
 
         if (peek >= 0x0D800 && peek <= 0x0DBFF ) {
             if ( !mustBeAnID ) mustBeAnID = 2;
-
-             this . c ++; e = peek; r = this.peekTheSecondByte(); 
+            this . c ++;
+            e = peek;
+            r = this.peekTheSecondByte(); 
             peek = ((peek - 0x0D800)<<10) + ( r-0x0DC00) + (0x010000);
         }
 
         if (mustBeAnID) {
-               if (!IDHead(peek))
-                 this.err('a ' + mustBeAnID + ' sequence in identifier head position must belong to IDStart group, but it (' + _h(peek) + ') does not');
+           if (!IDHead(peek))
+             this.err('a ' + mustBeAnID + ' sequence in identifier head position must belong to IDStart group, but it (' + _h(peek) + ') does not');
 
-                n = this.readAnIdentifierToken( mustBeAnID === (2) ? (String.fromCharCode ( peek, r ) ) : String.fromCharCode ( peek) ); 
+           n = this.readAnIdentifierToken( mustBeAnID === (2) ? (String.fromCharCode ( peek, r ) ) : String.fromCharCode ( peek) ); 
         }
  
         else {n = (this.readMisc());}
     }
   }
 
-  n.start = _c; n.end = this.c;
+  this.c0  = _c;
+  this.col0= col;
+  this.li0 = li ;
   this.col += (n.end - n.start);
-  n.loc = { start: {   line : li, column: col }, end: { line: this.li, column: this.col } };
+//  n.loc = { start: {   line : li, column: col }, end: { line: this.li, column: this.col } };
+
   if ( ! n.contents ) n.contents = this.src.substring(n.start, n.end);
   n. src = this.src;
   if (!n.type) n.type = n.contents
@@ -286,31 +278,36 @@ return n;
 
 lp.skipS = function() {
 
+     this.colC =  this.col;
+     this.cC   =  this.c  ;
+     this.liC  =  this.li ;
+ 
      var noNewLine = true; 
-     var c = this.c, l = this.src, e = l.length, start = c;
+     var c = this.c,
+         l = this.src,
+         e = l.length,
+         start = c;
 
      while ( c < e ) {
        switch ( l.charCodeAt ( c ) ) {
-         case /* _ws */ 32 :
-             while ( l.charCodeAt ( ++ c ) === /* _ws */ 32 );
+         case  32 :
+             while ( l.charCodeAt ( ++ c ) ===  32 );
              continue;
 
-         case /* _cret */ 13 : if ( /* _lf */ 10 === l.charCodeAt ( c + 1 ) ) c ++; 
-         case /* _lf */ 10 :
+         case  13 : if (  10 === l.charCodeAt ( c + 1 ) ) c ++; 
+         case  10 :
             if ( noNewLine ) noNewLine = false; 
-            start = ++ c;
+            start = ++c;
             this.li ++; 
-            this.col = ( 0)
-            
+            this.col = 0;    
             continue;
             
-         case /* _tab */ 9: c++; continue;
-         case /* _div */ 47:
+         case  9: c++; continue;
+         case  47:
              switch ( l.charCodeAt ( c + ( 1) ) ) {
-                 case /* _div */ 47: c ++; this.c=c; this.readCmntl (); if ( noNewLine ) noNewLine = false; start = c = this.c; continue;
-                 case /* _eq */ 61: c ++; this. hasL = ! noNewLine; this.col += (c-start );this.c=c; return { contents: null, type : '=', loc : {} }; 
-
-                 case /* _mul */ 42: c += (2 ); this.col += (c-start );this.c = c; noNewLine = this. readCmntm () && noNewLine; start = c = this.c; continue;
+                 case  47: c++; this.c = c; this.readCmntl(); if ( noNewLine ) noNewLine = false; start = c = this.c; continue;
+                 case  61: c++; this.hasL = !noNewLine; this.col += (c-start);this.c=c; return { contents: null, type : '=', loc : {} }; 
+                 case  42: c += 2; this.col += (c-start ); this.c = c; noNewLine = this. readCmntm () && noNewLine; start = c = this.c; continue;
                  default:
                      c++; 
                      this. hasL = ! noNewLine;
@@ -319,35 +316,28 @@ lp.skipS = function() {
              }
 
          case 0x0020:case 0x00A0:case 0x1680:case 0x2000:
-         case 0x2001:case 0x2002:case 0x2003:case 0x2004:case 0x2005:case 0x2006:case 0x2007:case 0x2008:case 0x2009:case 0x200A:
-         case 0x202F:case 0x205F:case 0x3000:
-                                                    c ++; continue;
+         case 0x2001:case 0x2002:case 0x2003:case 0x2004:
+         case 0x2005:case 0x2006:case 0x2007:case 0x2008:
+         case 0x2009:case 0x200A:case 0x202F:case 0x205F:
+         case 0x3000: c++; continue;
 
          case 0x2028:
-         case ((0x202<<4) + ( ( 9 ) )) : 
+         case 0x2029: 
             if ( noNewLine ) noNewLine = false;
             start = ++c;
             this.col = 0;
             this.li ++; continue; 
 
          default :
-           if ( this. isScript   &&  l. charCodeAt ( c ) === /* _less */ 60 &&
-                                     l. charCodeAt ( c + 1 )   === /* _exc */ 33 &&
-                                     l. charCodeAt ( c + 2 )   === /* _min */ 45 &&
-                                     l. charCodeAt ( c + 2 + 1)=== /* _min */ 45 )  {
-              this.c = c  +4  ;
-              this. readCmntl() ;
-              if ( noNewLine ) noNewLine = false ;
-              start = c = this.c ; 
-
-
-
-
-
-
+           if ( this. isScript   &&  l. charCodeAt ( c ) ===  60 &&
+                                     l. charCodeAt ( c + 1 )   ===  33 &&
+                                     l. charCodeAt ( c + 2 )   ===  45 &&
+                                     l. charCodeAt ( c + 2 + 1)===  45 )  {
+              this.c = c + 4;
+              this.readCmntl();
+              if ( noNewLine ) noNewLine = false;
+              start = c = this.c; 
               continue ;
-
-
            }
 
            this.col += (c-start );this.c=c; this.hasL = !noNewLine; return;
@@ -355,8 +345,8 @@ lp.skipS = function() {
        }
      } 
 
- this.col += (c-start );this.c = c;
-
+  this.col += (c-start );
+  this.c = c;
   this.hasL = ! noNewLine; 
 };
 
@@ -418,10 +408,9 @@ var bch = function (_th, _func, _n, _l, _name) {
 
 lp.peekTheSecondByte = function () {
   var e = this.src.charCodeAt(this.c);
-
-  if (/* _bs */ 92 === e) {
-    if (/* _u */ 117 !==this.src.charCodeAt(++this.c)) this.err('the \\ must have "u" after it;instead, it has ' + this.src[this.c] );
-    e = (this.peekUSeq());
+  if ( 92 === e) {
+    if ( 117 !==this.src.charCodeAt(++this.c)) this.err('the \\ must have "u" after it;instead, it has ' + this.src[this.c] );
+    e = this.peekUSeq();
   } 
 
   else this.col--;
@@ -433,28 +422,30 @@ lp.peekTheSecondByte = function () {
 };
 
 var toNum = function (n) {
-  return (n >= /* _0 */ 48 && n <= /* _9 */ 57) ? n - /* _0 */ 48 :
-         (n <= /* _f */ 102 && n >= /* _a */ 97) ? 10 + n - /* _a */ 97 :
-         (n >= /* _A */ 65  && n <= /* _F */ 70) ? 10 + n - /* _A */ 65  : -1;
+  return (n >=  48 && n <=  57) ? n -  48 :
+         (n <=  102 && n >=  97) ? 10 + n -  97 :
+         (n >=  65  && n <=  70) ? 10 + n -  65  : -1;
 };
 
 lp.peekUSeq = function () {
-  var c = ++this.c, l = this.src, e = l.length;
-  var byteVal = 0;
-  var n = l.charCodeAt(c);
+  var c = ++this.c,
+      l = this.src,
+      e = l.length,
+      byteVal = 0 ,
+      n = l.charCodeAt(c);
   
-  if (/* _cubO */ 123 === n) {
+  if ( 123 === n) {
     n = l.charCodeAt(c + 1 );
     do {
       c++; 
-      n = toNum(n); if (n === - 1) this.err(n[c] + ' is not a valid hexadecimal');
+      n = toNum(n);
+      if (n === - 1) this.err(n[c] + ' is not a valid hexadecimal');
       byteVal <<= 4; byteVal += n;
       if (byteVal > 0x010FFFF ) this.err( 'Byte (' + _h (byteVal) + ') must not be bigger than 0x010FFFF ');
       n = l.charCodeAt(c);
-    } while (c < e && n !==/* _cubC */ 125);
+    } while (c < e && n !== 125);
 
     if ( c >= e ) this.err( 'Unterminated \\u{ seq' );
-
     this.c = c;
     return byteVal;
   }
@@ -476,16 +467,14 @@ lp.readAnIdentifierToken = function ( v ) {
     while (true ) {
       if ( IDBody( peek = l.charCodeAt(++c) ) ) continue;
      
-      if (peek === /* _bs */ 92) {
+      if (peek ===  92) {
          if ( !v ) v = l. charAt ( n -1 );
          if ( n < c ) v += l.substring(n, c);
+         if ( 117 !==l.charCodeAt(this.c = ++c) ) this.err('the \\ must have "u" after it;instead, it has ' + this.src[this.c]);
 
-         if (/* _u */ 117 !==l.charCodeAt(this.c = ++c) ) this.err('the \\ must have "u" after it;instead, it has ' + this.src[this.c]);
-        
          peek = this. peekUSeq();
          if (peek >= 0x0D800 && peek <= 0x0DBFF ) {
            this.c++;
- 
            r = this.peekTheSecondByte(); 
            if ( !IDBody(((peek-0x0D800)<<10) + (r-0x0DC00) + 0x010000) )
                 this.err('a \\u sequence in identifier body position must belong to IDContinue group, but it (' + _h (peek) + ') does not'); 
@@ -498,101 +487,95 @@ lp.readAnIdentifierToken = function ( v ) {
                this.err('a \\u sequence in identifier body position must belong to IDContinue group, but it (' + _h (peek) + ') does not'); 
             
             v += String.fromCharCode ( peek );
-         }
-         
+         }         
          c = this.c; n = c + 1;
          continue;
        }
  
        if (peek >= 0x0D800 && peek <= 0x0DBFF ) {
-          if ( !v ) { v = l. charAt ( n -1 ); }
-          if ( n < c ) v += l.substring(n, c); 
-         
+          if ( !v ) { v = l.charAt ( n - 1 ); }
+          if ( n < c ) v += l.substring(n, c);          
           r = this.peekTheSecondByte();
           if (!IDBody(((peek-0x0D800 ) << 10) + (r-0x0DC00) + 0x010000))
             this.err( 'a \\u sequence in identifier body position must belong to IDContinue group, but it (' + _h (peek) + ') does not' );
 
           v += String.fromCharCode(peek, r ); 
-          n = c+ ( 1);
-         
+          n = c + 1;
           c = this.c;
-
           continue;
        }
 
        break;
-
     }
 
-    if ( !v ) { v = l.substring(this.c, c); this.c = c; return { pDepth : 0, contents: v, type: 'Identifier', value : v, name : v }; }
+    if ( !v ) {
+        v = l.substring(this.c, c);
+        this.c = c;
+        return { pDepth : 0, contents: v, type: 'Identifier', value : v, name : v };
+    }
     
     this.c = c;
     if ( n < c ) v += l . substring(n, c);
-
-return { pDepth : 0, contents: v, type: 'Identifier', value : v, name : v };
+    return { pDepth : 0, contents: v, type: 'Identifier', value : v, name : v };
 };
 
 lp.readNumberLiteral = function (peek) {
-  var c = this.c, l = this.src, e = l.length;
-  var r = 10, v = 0, n = { contents: null, type : 'Literal' };
+  var c = this.c,
+      l = this.src,
+      e = l.length,
+      r = 10,
+      v = 0,
+      n = { contents: null, type : 'Literal' };
 
-  if (peek === /* _0 */ 48) {
+  if (peek ===  48) {
     r = l.charCodeAt(++c);
     switch (r) {
-      case /* _X */ 88:
-      case /* _x */ 120:
+      case  88:
+      case  120:
          if ( !num_hex(l.charCodeAt(++c) ) ) this.err (l[c] + ' is not a valid hexadecimal' );
-
-         while ( c < e && num_hex(r= l .charCodeAt ( (c ) ) ) ) c ++;
-    
+         while ( c < e && num_hex(r= l .charCodeAt(c))) c ++;
          n. value = parseInt ( n.contents = l.substring(this.c, c) ); 
          this.c = c;
-        
          return n;
 
-      case /* _B */ 66:
-      case /* _b */ 98:
-        r = l .charCodeAt ( ++ c);
-        if ( r !==/* _0 */ 48 && r !==/* _1 */ 49 ) this.err( 'got ' + l[c] + ' but expected either 0 or 1' );
-        v = r - /* _0 */ 48; 
-        while ( c < e && ( r = l . charCodeAt(c ), r === /* _0 */ 48 || r === /* _1 */ 49 ) ) { c ++; v<<= 1; v |= (r- /* _0 */ 48 ); }
-        this.c=c; n. value = v;
-
+      case  66:
+      case  98:
+        r = l.charCodeAt(++c);
+        if ( r !== 48 && r !== 49 ) this.err( 'got ' + l[c] + ' but expected either 0 or 1' );
+        v = r - 48; 
+        while ( c < e && ( r = l.charCodeAt(c ), r ===  48 || r ===  49 ) ) { c ++; v<<= 1; v |= (r - 48 ); }
+        this.c=c;
+        n.value = v;
         return n;
 
-      case /* _O */ 79:
-      case /* _o */ 111:
-        r = l . charCodeAt ( ++ c);
-        ( r < /* _0 */ 48 || r >= /* _8 */ 38  ) && ( this.err( 'must e ' ) );
-
-        { v = r - /* _0 */ 48; }
-
-        while ( c < e && ( r = l.charCodeAt ( ++ c), r >= /* _0 */ 48 && r < /* _8 */ 38  ) ) c ++, v<<= ( 2 + 1 ), v |= (r- /* _0 */ 48 );
-        this.c=c; n. value = v;
+      case  79:
+      case  111:
+        r = l.charCodeAt(++c);
+        if ( r <  48 || r >= 38 ) this.err( 'must e ' );
+        v = r -  48;
+        while ( c < e && ( r = l.charCodeAt ( ++ c), r >=  48 && r <  38 ) ) {  c ++;  v<<= 3; v |= (r -  48 );  } 
+        this.c=c;
+        n.value = v;
         return n;
 
       default:
 
-       if ( r >= /* _0 */ 48 && r <= /* _9 */ 57 ) {
+       if ( r >=  48 && r <=  57 ) {
           v  = 0 ;
-
-          if ( r >= /* _8 */ 38  ) v =           10  ;
-          while ( ++c < e && ( r = l. charCodeAt (c ), r >= /* _0 */ 48 && r<= /* _9 */ 57 ) ) if ( !v & r >= /* _8 */ 38  ) v = 10  ;
+          if ( r >= 38 ) v = 10;
+          while ( ++c < e && ( r = l. charCodeAt(c), r >= 48 && r<= 57 ) ) if ( !v & r >= 38 ) v = 10 ;
           if ( !v ) v = 8 ;
-
-          n. value = parseInt ( n. contents = l.substring( this.c, ( (c) ) ) , v );
+          n. value = parseInt ( n. contents = l.substring( this.c, c ) , v );
           this.c=c;
-
-
-         return n;
+          return n;
        }
 
        else {
          v = this.c;
          this.c = c;
-         if ( /* _dot */ 46 === r ) {
-            ++ this.c;
-            this.frac ( n);
+         if ( 46 === r ) {
+            ++this.c;
+            this.frac(n);
             n. value = parseFloat ( n.contents = l.substring( v, this.c ) );
          }
 
@@ -607,164 +590,161 @@ lp.readNumberLiteral = function (peek) {
   } 
 
   else {
-    c = this.c; v = this.c;
-
-    while (c ++ < e && num(l.charCodeAt(c)));
-
+    c = this.c; 
+    v = this.c;
+    while (c ++ < e && isNum(l.charCodeAt(c)));
     this.c = c;
-    if ( this.src.charCodeAt (this.c) === /* _dot */ 46 ) {
+    if ( this.src.charCodeAt (this.c) ===  46 ) {
        this.c++;
        this.frac(n); 
        n. value = ( parseFloat ( n. contents = l.substring(v, this.c ) ) );
+    }
 
-     }
-
-   else n. value = ( parseInt ( n. contents = l. substring(v, this.c ) ) );
-
+    else n. value =  parseInt ( n. contents = l. substring(v, this.c ) );
   }
 
   if (c < e && IDHead(l.charCodeAt(c))) this.err('Num can not be follwed by ' + this.src[this.c]);
-  return (n );
+  return n;
 
 };
 
 lp . frac = function(n) {
 
   var c = this.c, l = this.src, e = l.length;
-  while( c < e && Num(l.charCodeAt (c)))c ++;
-
+  while( c < e && isNum(l.charCodeAt(c)))c ++;
   if ( n || c > this.c ) {
     switch(l.charCodeAt(c)){
-      case /* _E */ 69:
-      case /* _e */ 0x65: 
+      case  69:
+      case  0x65: 
         c++;
-        switch(l.charCodeAt(c)){case /* _min */ 45: case /* _add */ 43: c++; }
-        if ( c < e && Num(l.charCodeAt( c) )) { do { c++; } while (  c < e && Num(l.charCodeAt( c) )       )       ; } 
+        switch(l.charCodeAt(c)){ case 45: case 43: c++; }
+        if ( c < e && isNum(l.charCodeAt(c))) { do { c++; } while (  c < e && isNum(l.charCodeAt(c))); } 
         else this.err ( 'A - or + or num expeted; got ' + l[c]   )  ;
-
      }
 
-    this.c=c; 
+     this.c=c; 
  }
 
  if ( !n ) return { contents: null, type : 'Literal' }
-}
+};
 
 lp.readStrLiteral = function (start) {
-  var c = this.c += 1, l = this.src, e = l.length, i = 0,  _e ;
+  var c = ++ this.c,
+      l = this.src,
+      e = l.length,
+      i = 0,
+      _e ;
 
   var v = "", v_start = c;
   while (c < e && (i = l.charCodeAt(c)) !== start) {
     switch ( i ) {
-     
-     case /* _bs */ 92 : 
+      case  92 : 
         v += l.substring(v_start, c ); 
         switch ( l.charCodeAt ( ++ c ) ) {
-          case /* _bs */ 92 : v += '\\'; break;
-          case /* _dq */ 34 : v +='\"'; break;
-          case /* _sq */ 39 : v += '\''; break;
-          case /* _b */ 98 : v += '\b'; break;
-          case /* _v */ 0x076  : v += '\v'; break;
-          case /* _f */ 102 : v += '\f'; break;
-          case /* _t */ 116  : v += '\t'; break;
-          case /* _r */ 0x072  : v += '\r'; break; 
-          case /* _n */ 0x6e  : v += '\n'; break;
+          case  92 : v += '\\'; break;
+          case  34 : v +='\"'; break;
+          case  39 : v += '\''; break;
+          case  98 : v += '\b'; break;
+          case  0x076  : v += '\v'; break;
+          case  102 : v += '\f'; break;
+          case  116  : v += '\t'; break;
+          case  0x072  : v += '\r'; break; 
+          case  0x6e  : v += '\n'; break;
 
-          case /* _u */ 117 :
+          case  117 :
              this.c=c; 
-
              _e = this. peekUSeq ();
-            
              if ( _e >= 0x0D800 && _e <= 0x0DBFF ) {
                this.c ++;
-               v += String.fromCharCode ( _e, ( ( this ) . peekTheSecondByte () ) );
-              }
+               v += String.fromCharCode( _e,this.peekTheSecondByte ());
+             }
 
-             else {
-               v += String.fromCharCode( (_e) );
-
-                  }
-                     
+             else { v += String.fromCharCode(_e); }
              c = this.c; 
              break;
-          case /* _x */ 120 :
-            _e = toNum ( l. charCodeAt ( ++c)  )  ; if ( _e ===  -1  ) this.err ( l[c] + ' is not a valid hex   '  )  ;
-            i  = toNum ( l. charCodeAt ( ++c ) ) ; if ( i  ===  -1  ) this.err ( l[c+1] + ' is not a valid hex '  )  ; _e |= ( i<<4 )  ;
-            
-            v  += String.fromCharCode( _e )  ; break ;
-     
-             
-          case /* _cret */ 13: if ( l.charCodeAt(c + 1 ) === /* _lf */ 10 ) c++;
-          case /* _lf */ 10 :
-          case 0x2028 :
-          case ((0x202<<4) + 9 ) : this.li ++; break;
 
-          default : v += l.charAt(c); break;
+          case  120 :
+            _e = toNum (l.charCodeAt(++c));
+            if ( _e ===  -1  ) this.err ( l[c] + ' is not a valid hex   '  )  ;
+            i  = toNum (l.charCodeAt(++c));
+            if ( i  ===  -1  ) this.err ( l[c+1] + ' is not a valid hex '  )  ; _e |= ( i<<4 )  ;
+            v  += String.fromCharCode( _e )  ;
+            break ;
+             
+          case  13:
+             if ( l.charCodeAt(c + 1 ) ===  10 ) c++;
+          case  10:
+          case 0x2028:
+          case 0x2029:
+             this.li ++;
+             break;
+
+          default :
+             v += l.charAt(c);
+             break ;
         }
 
         v_start = ++c;
-
         continue;
 
-     case /* _cret */ 13: if ( l.charCodeAt(c + 1 ) === /* _lf */ 10 ) c++;
-     case /* _lf */ 10 :
-     case 0x2028 :
-     case ((0x202<<4) + 9 ) : this.err( 'a newline can not appear in a str literal' );
+     case  13:
+         if ( l.charCodeAt(c + 1 ) ===  10 ) c++;
+     case  10:
+     case  0x2028:
+     case  0x2029: this.err( 'a newline can not appear in a str literal' );
     }
   
      c++;
   }
 
   if ( v_start !==c ) { v += l.substring(v_start, c ); }
-
   this.c = c;
-
-  if (!(c < e && (l.charCodeAt(c)) === start)) {
-    this.err('s lit open');
-  }
+  if (!(c < e && (l.charCodeAt(c)) === start)) { this.err('s lit open'); }
   ++this.c;
-  return {
-    contents: null, type: 'Literal', value : v
-  };
-
+  return { contents: null, type: 'Literal', value : v };
 };
 
 lp . readDot = function() {
    ++this.c;
-   if( this.src.charCodeAt(this.c)===/* _dot */ 46) {
-     if (this.src.charCodeAt(++ this.c) === /* _dot */ 46) ++this.c; 
-     else this.err('Unexpectd ' + this.src[this.c]);
+   if( this.src.charCodeAt(this.c)=== 46) {
+      if (this.src.charCodeAt(++ this.c) ===  46) ++this.c; 
+      else this.err('Unexpectd ' + this.src[this.c]);
    }
 
-   else if ( Num(this.src.charCodeAt(this.c))) return this.frac();
+   else if ( isNum(this.src.charCodeAt(this.c))) return this.frac();
 
 return { contents: null, type : null }; 
 };
 
 lp.readCmntm = function () {
-   var c = this.c, l = this.src, e = l.length;
-   var r, start = c, n = true;
+   var c = this.c,
+       l = this.src,
+       e = l.length,
+       r,
+       start = c, n = true;
 
    while ( c < e ) 
         switch (r = l.charCodeAt(c++ ) ) {
-
-          case /* _mul */ 42 :
-             if ( l.charCodeAt ( c ) === /* _div */ 47 ) {
+          case  42 :
+             if ( l.charCodeAt ( c ) ===  47 ) {
                 c++;
-                this.col += (c-(start ) );
+                this.col += (c-start);
                 this.c=c;
  
-                if ( !n && this.isScript && l.charCodeAt(c) === /* _min */ 45 &&
-                                            l.charCodeAt(c+ 1 ) === /* _min */ 45 &&
-                                            l.charCodeAt ( ( c+  (2)  )   )  === /* _grea */ 62
-                   ) { this.c  += 2   +  1 ; this. readCmntl   () ; }  
- 
+                if ( !n && this.isScript && l.charCodeAt(c) ===  45 &&
+                                            l.charCodeAt(c+ 1 ) ===  45 &&
+                                            l.charCodeAt ( ( c+  (2)  )   )  ===  62
+                   ) {
+                     this.c  += 3;
+                     this. readCmntl();
+                }  
                 return n;
              }
              continue;
 
-          case /* _cret */ 13 : if (  /* _lf */ 10   ===  l.charCodeAt(c) ) c++; 
-          case /* _lf */ 10 :
+          case  13 :
+            if (   10   ===  l.charCodeAt(c) ) c++; 
+          case  10 :
           case 0x2028:
           case ((0x202<<4) + ( ( 9 ) )) : 
             start = c ;
@@ -772,29 +752,35 @@ lp.readCmntm = function () {
             this.col = 0;
             this.li ++; continue; 
 
-          default : if ( r >= 0x0D800 && r <= 0x0DBFF ) this.col--;
+          default :
+             if ( r >= 0x0D800 && r <= 0x0DBFF )
+                this.col--;
         }
 
    this.err( ' */ ' );
 };
 
 lp.readCmntl = function() {
-    var c = this.c, l = this.src, e = l.length, r;
+    var c = this.c,
+        l = this.src,
+        e = l.length,
+        r;
 
     L :
     while ( c < e ) 
        switch (r = l.charCodeAt(c++ ) ) {
-
-          case /* _cret */ 13 : if ( /* _lf */ 10 === l . charCodeAt ( c) ) c++; 
-          case /* _lf */ 10 :
+          case  13 :
+             if (10 === l.charCodeAt(c)) c++; 
+          case  10 :
           case 0x2028:
-          case ((0x202<<4) + ( ( 9 ) )) :
+          case 0x2029:
             this.col = 0;
             this.li ++; 
             break L;
 
-          default : if ( r >= 0x0D800 && r <= 0x0DBFF ) this.col--;
-
+          default :
+            if ( r >= 0x0D800 && r <= 0x0DBFF )
+              this.col--;
        }
 
     this.c=c;
@@ -807,17 +793,15 @@ lp.readMisc = function () { this.c++; return { contents: null, type: null, loc :
 var iskw = createLookup_sw(kwords);
 
 lp.next = function () {
-
-  var e = this.peek, n = this.nextraw();
+  var e = this.peek,
+      n = this.nextraw();
   this.peek = n;
-
 return e;
 };
 
 lp.expect = function (n) {
   var e = this.next();
   if (e.contents === n) return e;
-
   this.err( '\'' + n + '\' expected; found <' + e.type + '>', e);
 };
 
@@ -826,21 +810,21 @@ lp.err = function (n) {
   throw new Error(n);
 };
 
-lp . end = function (n, e) { n.end = e.end; n.loc.end = e.loc.end; return n; };
+lp . end = function (n) {
+  n.end = this.cC  ;
+  n.loc.end = { line: this.liC , column:  ( this.colC ) } ;
+  return n;
+};
 
 lp.semi = function () {
   switch (this.peek.type) {
-    case ';':
-           return this.next();
-
+    case ';': return this.next();
     case 'eof':
-    case '}':
-      return;
+    case '}': return;
   }
 
-   (this.hasL) || this.err('EOS expected; found ' + this.peek.contents );
+  if ( !this.hasL) this.err('EOS expected; found ' + this.peek.contents );
 };
-
 
 lp.parseProgram = function () {
   this.next();
@@ -875,7 +859,7 @@ lp.parseStatement = function (nullNo) {
 
   switch (this.peek.type) {
     case '{': return this.parseBlckStatement();
-    case ';': this.peek.type = 'EmptyStatement'; return this.next();
+    case ';': head  = this.peek; this.start(head) ;  this.peek.type = 'EmptyStatement'; this.end(head ) ;  return this.next();
     case 'eof': return;
   }
 
@@ -890,341 +874,298 @@ lp.parseStatement = function (nullNo) {
 
   head = this .parseExpr(head);
   if (head .type === 'Identifier' && this.peek.type === ':') {
-    l = head  ; 
-     head = this.start( this.next(), head ); 
+     l = head  ; 
+     head =  this.next();
+     head.start = l.start;
+     head.loc = l.loc; 
      head. type= 'LabeledStatement';
      head. label = l  ;
-
-   l  = l.contents +  '%';
-   if ( this.lbn.hasOwnProperty ( l ) ) this.err( 'label already exists ' + ( l.substr(0, l.length ) ) );
-   this.lbn[l] = this. iteD; 
-    
-    head.body = this.parseStatement(); delete this.lbn[l];
-
-    return this.end(head, head.body)
+     l  = l.contents +  '%';
+     if ( this.lbn.hasOwnProperty ( l ) ) this.err( 'label already exists ' +  l.substr(0, l.length ) );
+     this.lbn[l] = this. iteD; 
+     head.body = this.parseStatement(); delete this.lbn[l];
+     return this.end(head  )
   }
 
   l =  head  ;
-  head = this.start( { 
+  head =  { 
        type : 'ExpressionStatement', 
        expression : core( head ), 
-       loc : {}
-  }, head );
+       loc : { start: l.loc.start } ,
+       start : l.start
+  };
 
-return this.end(head, this.semi() || l );
+  return  this.semi(head) ;
 };
 
-lp . start = function (n, e) { n.src = e.src; n.start = e.start; n.loc.start = e.loc.start; return n; };
+lp.start = function (n) {
+   n.src = this.src;
+   n.start = this.c0;
+   n.loc = { start :  {   line : this.li0 , column: this.col0 } , end  : null }  ;
+   return n;
+
+};
 
 lp.parseIfStatement = function () {
-  var n = this.next(); 
+  var n = this.start(this.peek ) ;
+  this.next(); 
   n. type= 'IfStatement';
 
-  this.expect('('); n. test = core ( this.parseExpr() ); this.expect(')' );
+  this.expect('(');
+  n.test = core(this.parseExpr());
+  this.expect(')');
+  var scopeFlags = this.scopeFlags;
+  this.scopeFlags |=  4 ;
+  n.consequent = this. parseStatement(true);
+  this.scopeFlags = scopeFlags; 
 
-  var scopeFlags = this.scopeFlags; this.scopeFlags |= /* breakFlag */ 4 ;
-  n.consequent = this. parseStatement (true); this.scopeFlags = scopeFlags; 
- 
   if ( this. peek.contents === 'else') { this.next(); n. alternate = this.parseStatement(true); }
   else { n.alternate = null; }
 
-return this.end(n, n.alternate ? n.alternate : n.consequent);
+  return this.end(n);
 };
 
 lp.parseWhileStatement = function () {
   
-  var n = this.next();
+  var n = this.start(this.peek ) ;
+  this.next();
   n. type = 'WhileStatement';
-
-  this.expect('('); n. test = core( this.parseExpr() ); this.expect(')');
-
-  var scopeFlags = this.scopeFlags; this.scopeFlags |= (/* continueFlag */ 8 |/* breakFlag */ 4  );
- 
+  this.expect('('); 
+  n.test = core(this.parseExpr());
+  this.expect(')');
+  var scopeFlags = this.scopeFlags;
+  this.scopeFlags |= ( 8 | 4  );
   this. iteD++;
   n.body = this.parseStatement(true);
   this.scopeFlags = scopeFlags;
-  
   this.iteD--;
-
-return this.end(n, n.body);
+  return this.end(n);
 };
 
 lp.parseBlckStatement = function () {
-  var n = this.next();
-   
+  var n = this.start(this.peek) ;
+  this.next();
   n. type = 'BlockStatement',
   n. body = this.blck();
-
-return this.end(n, this.expect(('}')));
+  this.expect('}')
+  return this.end(n);
 };
 
 lp.parseDoWhileStatement = function () {
-  var n = this.start({ 
-        type: 'DoWhileStatement', 
-        loc : {}
-  }, this.next());
-
-  var scopeFlags = this. scopeFlags; this.scopeFlags |= ( /* breakFlag */ 4 |/* continueFlag */ 8  );
-
+  var n = this.start(this.peek ) ;
+  this.next();
+  n. type = 'DoWhileStatement';
+  var scopeFlags = this. scopeFlags; this.scopeFlags |= (  4 | 8  );
   this. iteD++; 
   n.body = this.parseStatement ();
   this.scopeFlags = ( scopeFlags );
-
   this. iteD --; 
-
   this.expect('while');
-  this.expect('('); n. test =core( this.parseExpr() ); var e = this.expect(')');
+  this.expect('(');
+  n. test =core(this.parseExpr());
+  var e = this.expect(')');
 
   if (this.peek.contents === ';' ) e = this.next();
-
-return this.end(n, e);
+  return this.end(n);
 };
 
 lp.parseContinueStatement = function () {
-
-  if ( !(this.scopeFlags & /* continueFlag */ 8 ) ) this.err ( 'continue is not valid ' );
-  var e = this. id (true);
-  var n = this.start({
-        type: 'ContinueStatement',
-        loc:{}
-  }, e);
-
-  if ( n.label = this.hasL ? null : this. peek. type === 'Identifier' ? this.next() : null ) {
+  if ( !(this.scopeFlags &  8 ) ) this.err ( 'continue is not valid ' );
+  var n = this.start( this. peek   )  ;
+  n.  type    =   'ContinueStatement'   ;
+  this.next   () ;
+  if ( this.hasL ) {  n.label = null ;  return this.semi(n) ;   }
+  if ( n.label = this. peek. type === 'Identifier' ? this.next() : null ) {
      var _l = ( n.label.contents + '%' );
-
      if ( ! this.lbn.hasOwnProperty ( _l ) ) this.err( 'Label is not def ' + ( n.label ) );
      else if ( this.lbn [_l] === this.iteD) this.err('Not iter for ' + ( n.label ) );
-    }
- 
-return this.end(n, this.semi() || n.label || e);
+  }
+  return this.semi(n );
 };
 
 lp.parseBreakStatement = function () {
-
-  if ( ( ! ( this.scopeFlags & /* breakFlag */ 4  ) ) ) this.err ( 'break is not valid ' );
-  
-  var e = this. id (true);
-  var n = this.start({
-        type: 'BreakStatement',
-        loc: {}
-  }, e);
-
- if ( n.label = this.hasL ? null : this. peek. type === 'Identifier' ? this.next() : null )
-    if ( !this .lbn.hasOwnProperty ( ( ( n.label) .contents ) + '%' ) ) this.err( 'Label is not def ' + n.label . contents ); 
+  if ( !( this.scopeFlags &  4  ) ) this.err ( 'break is not valid ' );
+  var n = this.start(this.peek   )  ;
+  n. type= 'BreakStatement' ;
+  this.next() ;
+  if ( this.hasL ) { n.label = null ;  return this.semi(n)  ;  }
+  if ( n.label = this. peek. type === 'Identifier' ? this.next() : null )
+    if ( !this .lbn.hasOwnProperty ( n.label.contents  + '%' ) )
+      this.err( 'Label is not def ' + n.label . contents ); 
  
- return this.end(n, (this .semi() ) || n . label || e);
+  return this.semi(n) ;
 };
 
 lp.parseSwitchStatement = function () {
- 
-  var n = this.next(); 
+  var n = this.start(this.peek ) ;
+  this.next() ; 
   n. type= 'SwitchStatement';
-
-  this.expect('('); n. discriminant = ( core ( this.parseExpr() ) ); this.expect ( ')' );
+  this.expect('(');
+  n. discriminant = core(this.parseExpr());
+  this.expect ( ')' );
   this.expect('{');
-
   var c = [], hasD = false;
   var scopeFlags = this.scopeFlags, e;
-
-  this.scopeFlags |= ( /* breakFlag */ 4  );
+  this.scopeFlags |=  4;
 
   while ( e = this.parseSwitchCase()) {
     if (!e.test) {
-      if ( hasD ) this.err('switch statement has already got a \'default\'');
-      hasD = true;
+       if ( hasD ) this.err('switch statement has already got a \'default\'');
+       hasD = true;
     }
 
     c.push(e);
   }
 
   n. cases = c;
-
   this.scopeFlags = scopeFlags;
-
-return this.end(n, this.expect('}'));
+  this.expect('}')
+  return this.end(n );
 };
 
 lp.parseSwitchCase = function () {
   var n;
-
   var e = this.peek.contents;
   if (e === 'case') { 
-    n = this.next();
-
+    n = this.start(this.peek ) ;
+    this.next();
     n. type= 'SwitchCase';
- 
     this.foundStmt = false;
     n. test = core ( this.parseExpr() );
   }
  
   else {
     if (e === 'default') {
-      n = this.next();
-     
+      n = this.start(this.peek ) ;
+      this.next();
       n. type= 'SwitchCase';
-
       n. test = null;
       this.foundStmt = false;
      } 
     
-     else
-       return;
+     else return;
   }
 
-  e = this.expect(':');
-  var stmts = n.consequent = this.blck();
-
-return this.end(n, (stmts && stmts.length && stmts[stmts.length-1]) || e);
+  n.consequent = this.blck();
+  return this.end(n);
 };
 
 lp.parseReturnStatement = function () {
-
-  if ( ( ! ( this.scopeFlags & /* funcFlag */ 2  ) ) ) { this.err ( 'not in function: return ' ); }
-
-  var e = this.next();
-  var n = this.start({
-        type: 'ReturnStatement',
-        loc: {}
-  }, e);
-
+  if ( !(this.scopeFlags&2 ) )  this.err ( 'not in function: return ' );
+  var n = this.start( this. peek ) ;
+  n. type = 'ReturnStatement';
+  this.next();
   if (this.hasL) n. argument = null;
   else {
     var head = this.parseExprHeadOrYield ();
     n .argument = head && core ( e = this.parseExpr(head) );
   }
-
-return this.end(n, this.semi() || e );
+  return  this.semi(n);
 };
 
 lp.parseThrowStatement = function () {
-  var e = this.next();
-  var n = this.start({
-        type:'ThrowStatement',
-        loc: {}
-  }, e);
-
+  var n = this.start(this. peek ) ;
+  this.  type ='ThrowStatement';
+  this.next();
   if ( this.hasL ) n. argument = null;
   else {
     var head = this. parseExprHeadOrYield ();
     n. argument = head ? core ( e = this. parseExpr(head) ) : null;
   }
 
-return this.end(n, this.semi() || e );
+  return  this.semi(n);
 };
 
 lp.parseTryStatement = function () {
  
-  var n = this.start({
-        type: 'TryStatement',
-        loc: {}
-  }, this.next());
-
+  var n = this.start(this.peek )  ;
+  n.  type= 'TryStatement' ;
+  this.next();
   n. block = this.parseBlckStatement ();
-
   if (this.peek.contents === 'catch') n.handler = this.parseCatchClause ();
   else { n . handler = null; }
 
-  if (this.peek.contents === 'finally') { this.next (), n.finalizer = this.parseBlckStatement(); }
+  if (this.peek.contents === 'finally') { this.next(); n.finalizer = this.parseBlckStatement(); }
   else { ( n . finalizer ) = null; }
-
-return this.end(n, n.finalizer || n. handler || n. block );
+  return this.end(n );
 };
 
 lp. parseCatchClause = function () {
- 
-  var n = this.start ( {
-        type: 'CatchClause',
-        loc: {}
-  }, this.next() );
- 
-  this.expect('('); n. param = this. parsePattern  ();this.expect(')');
-
-return (this.end(n, n. body = this. parseBlckStatement ()));
+  var n = this.start (this. peek ) ;
+  n.  type = 'CatchClause';
+  this.next();
+  this.expect('(');
+  n. param = this. parsePattern  ();
+  this.expect(')');
+  n. body = this. parseBlckStatement ()
+  return this.end(n );
 };
 
 lp . parseWithStatement = function() {
-
-   var n = this.start ( {
-         type : 'WithStatement',
-         loc : {}
-   }, this.next () );
-
-   this.expect('(' ); n .object = core ( this. parseExpr () ); this.expect(')' );
-
-return ( this.end( n, n . body = this.parseStatement (true) ) );
+   var n = this.start (this. peek )  ;
+   n. type = 'WithStatement';
+   this.next () ;
+   this.expect('(' );
+   n .object = core(this.parseExpr());
+   this.expect(')' );
+   n.body = this.parseStatement(true);
+   return this.end(n );
 };
 
-lp.parseExpr = function ( head, cf ) {
-
+lp.parseExpr = function(head,cf) {
   var n;
-
-  head = this.parseNonSeqExpr(
-    head || this.parseExprHeadOrYield (cf) || this.err('n'),
-    0,
-    cf
-  );
-
+  head = this.parseNonSeqExpr( head || this.parseExprHeadOrYield (cf) || this.err('n'), 0, cf );
   if ( this.peek.contents === ',' ) {
-    
-    head = this.start ({
-         type : 'SequenceExpression',
-         expressions : [core(head ) ],
-         loc: {}
-    }, head );
-
+    head = { type : 'SequenceExpression', expressions : [core(head ) ], start : head.start, loc:  { start : head.loc.start } };
     do {
       this.next();
       n = this.parseNonSeqExpr( this. parseExprHeadOrYield(), 0, cf );
       head.expressions.push( core(n) ); 
     } while ( this.peek.contents === ',' );
 
-   return this.end(head, n ); 
-   }
+    return this.end(head ); 
+  }
 
-return head;
+  return head;
 };
 
 lp.parseNonSeqExpr = function (head, breakIfLessThanThis, cFlags_For ) {
 
-  if (!head) this.err( 'Unexpected ' + this . peek . type );
+  if (!head) this.err( 'Unexpected ' + this.peek.type );
 
   var n;
   if ( this.funcBecause ) {
-     if ( this. peek. contents === '=>' ) {
-       if ( this. propThatMustBeInAnAssig ) {
+     if ( this.peek.contents === '=>' ) {
+       if ( this.propThatMustBeInAnAssig ) {
           var conv = this.convList(core(head));
           if ( conv ) this.err( ' param no ' );
           this. propThatMustBeInAnAssig = null;
        }
 
        this.next ();
-
-       this.funcBecause = null; n = core(head );
-
-       n = this.start ( { 
+       this.funcBecause = null;
+       n = core(head );
+       n =  { 
          type: 'ArrowFunctionExpression',
          expression: this. peek. contents !=='{',
-         loc: {},
+         start : head. start ,
+         loc : { start : head.loc.start }  ,      
          params : n .type === 'SequenceExpression' ? n .expressions : [n ]
-       }, head );
+       }  ;
 
-       if ( ! n.expression ) { return this.end(n, n.body = this.parseFuncBody () ); }
-
-        ( n. body ) = (head = this. parseNonSeqExpr (
-            this.parseExprHeadOrYield () || this.err ( 'Unexpected ' + this. peek. contents ),
-            0,
-            (cFlags_For  )    
-       )
+       if ( ! n.expression ) {  n.body = this.parseFuncBody () ; }
+       else n.body = core ( this. parseNonSeqExpr (
+            this.parseExprHeadOrYield () || this.err ( 'Unexpected ' + this. peek. contents ), 0,cFlags_For )
        ); 
 
-     return (this.end(n, head ) );
+       return this.end(n);
      }
 
      else this.err( this. propThatMustBeInAnAssig ? '(pat) must have => ': ( '=>' ) ); 
   } 
 
   if ( this. propThatMustBeInAnAssig ) {
-      if ( this. peek. contents !=='=' ) {
+      if ( this.peek.contents !=='=' ) {
           if ( this.canHaveNoAssig ) { this. canHaveNoAssig = false; return head; }
           else this. err( 'assig expcted ', head );
       }
@@ -1235,51 +1176,40 @@ lp.parseNonSeqExpr = function (head, breakIfLessThanThis, cFlags_For ) {
 
   if ( this. canHaveNoAssig ) this.canHaveNoAssig = false;
 
-  var o, prec, precOrAssocDistance;
-  var hasPrefixOrPostfix = false;
+  var o, prec, precOrAssocDistance,  hasPrefixOrPostfix = false;
 
   switch (head.contents) {
     case ('++') :
     case '--':
-      
       head. type = 'UpdateExpression', 
-      head. operator= head.contents 
-      this. simpAssig( head. argument = core( o = this. parseExprHead (/* cfExpectHeadBePrim */ 0x020  ) ) ) || 
-                       this.err ( head. argument . type + ' is not an assig ' ),
+      head. operator= head.contents; 
+      head. argument = core( this. parseExprHead ( 0x020  ) )
+      if (!this.simpAssig( head. argument ) )
+           this.err ( head. argument . type + ' is not an assig ' );
 
-      this.end(head, o);
+      this.end(head);
       hasPrefixOrPostfix = true;
-
       break;
 
     case 'yield' :
+      if ( ! ( this.scopeFlags &  0x010  ) ) this.err ( 'yield must not be there ' );
 
-      if ( ! ( this.scopeFlags & /* yieldFlag */ 0x010  ) ) this.err ( 'yield must not be there ' );
-
-      var e = head; 
-
-      head = this.start ( {
-           type: 'YieldExpression',
-           loc : {} 
-      }, head );
- 
-      if ( this.hasL ) head. argument = null, head. delegate = false;
+      head  . type   =   'YieldExpression';
+      if ( this.hasL ) {  head. argument = null ;  head. delegate = false;   }
       else {
-            if ( this.peek.contents === '*' ) {
-               this.next();
-               head. delegate = true;
-               o = this.parseExprHeadOrYield ();
-               head. argument = this.parseNonSeqExpr(o, cFlags_For );
-            }
-            
-            else { 
-               o = this.parseExprHeadOrYield ();
-               head. delegate = false; 
-               head. argument = o ? this.parseNonSeqExpr(o, cFlags_For ) : null;
-            }
+        if ( this.peek.contents === '*' ) {
+           this.next();
+           head. delegate = true;
+           o = this.parseExprHeadOrYield ();
+           head. argument =  core(  this.parseNonSeqExpr(o, cFlags_For  )   )   ;
+        }
+        else { 
+           o = this.parseExprHeadOrYield ();
+           head. delegate = false; 
+           head. argument = o ? core (  this.parseNonSeqExpr(o, cFlags_For )  )   : null;
+        }
       }
-         
-      return (this.end(head, ( head ) . argument||e));
+      return this.end(head);
   }
 
   EXPR:
@@ -1290,143 +1220,129 @@ lp.parseNonSeqExpr = function (head, breakIfLessThanThis, cFlags_For ) {
       case '--':
         if (hasPrefixOrPostfix) this.err(' both ')
         if (this.hasL) return head;
-       
-        n = ( core(head ) );
-        this.simpAssig ( n ) || this.err( ( n.   type ) + ' is not an assig   '  );
-      
-  
-        head = this.start ( this.next(), head );
+        n = core(head);
+        if ( ! this.simpAssig ( n )  )
+           this.err( n.   type + ' is not an assig   ');
+ 
+         
+        o  =  this. peek ;
 
-        head. type = 'UpdateExpression',
-        head. argument = n,
-        
-        head. operator = o,
-        head. prefix = false
-       ; 
-
-        this.end(head, o);
+        o  .  type = 'UpdateExpression';
+        o  .  loc  = { start : head. loc. start } ;
+        o  . start = head. start ;
+ 
+        o  . argument = n;
+        o  . operator = this.next().contents ;
+        o  . prefix = false; 
+        head  =  this.end( o);
         hasPrefixOrPostfix = true;
-        
         continue;
 
       case '/' :
       case '+' :
       case '-' :
       case 'op' :
-         prec = o . prec;
+         prec = o. prec;
          break;
 
       case '?':
          if ( breakIfLessThanThis) return head;
-         
-         n = core(head );
-         head = this.start ( this.next (), head ); 
-
-         head. type = 'ConditionalExpression',
-         head. test = n,
-         
-         head. consequent = core(this.parseExpr(null,0))
-        ;
- 
+         n = core(head);
+         o  = this.next()  ; 
+         o  . type = 'ConditionalExpression';
+         o  . loc = { start : head.loc.start }  ;
+         o  . start = head. start ; 
+         o  . test = n;
+         o  . consequent = core(this.parseExpr(null,0));
          this.expect(':');
-         o = this.parseNonSeqExpr( this.parseExprHeadOrYield(), 0, cFlags_For );
-         head. alternate = core(o);
-
-         return this.end(head, o );
+         o. alternate = core( this.parseNonSeqExpr( this.parseExprHeadOrYield(), 0, cFlags_For ));
+         return this.end( o );
        
        case '=' : 
-
           if( breakIfLessThanThis !==0 ) this.err( head.type + ' is not a valid assignable' );
-
           var convErr;
- 
           if ( o.contents === '=>' ) {
              n = core(head);
-
-             this. prepareArgs (true  )  ;
-
+             this. prepareArgs (true)  ;
              convErr = this.convList(n);
-             if ( convErr ) this.err ( convErr.type + ' is not a param for a function; reason ' + this.convErr );
+             if (convErr) this.err ( convErr.type + ' is not a param for a function; reason ' + this.convErr );
 
-             this.next ();
-             n = this.start ( {
-               type : 'ArrowFunctionExpression',
-               params : n. type === 'SequenceExpression' ? n.expressions : [n],
-               loc : {}
-             }, head ); 
-
-             if ( this. peek. contents === '{' ) { n.expression = false; return this.end(n, n.body = this.parseFuncBody () ); }
-
-             n. expression = true;
-             head = this. parseNonSeqExpr(
+             o  =  this.next ();
+             o  .  type = 'ArrowFunctionExpression';
+             o  .  loc = { start : head. loc. start }  ;
+             o  .  start = head. start ; 
+             o  .  params= n. type === 'SequenceExpression' ? n.expressions : [n];
+          
+             if ( this. peek. contents === '{' ) {
+               o.expression = false;
+               o.body = this.parseFuncBody ()   ;
+             }
+             else {
+               o. body = core( this. parseNonSeqExpr(
                   this.parseExprHeadOrYield () || this.err ( 'Unexpected ' + this. peek. contents, head ),
                   0, 
-                  0);
-             n. body = core(head );
-
-           return this.end(n, head );
-           }
+                  0)  )  ;
+               o. expression = true;
+             }
+             return this.end(o );
+          }
 
           convErr = this.convAssig(core(head));
           if (convErr) { var m = this.convErr; this.convErr = null; this.err(m, convErr ); }
 
-          n = core(head ); head = this.start ( this.next (), head );
+          n  =  core(head );
+          o  = this. peek ;  
 
-          head. type= 'AssignmentExpression',
-          head. operator = o,
-          head. left = n,
-          head. pDepth = 0;
-          
-         head.right = core(o = this.parseNonSeqExpr(
-            this. parseExprHeadOrYield(),
-            0,
-            cFlags_For )
+          o  . type= 'AssignmentExpression';
+          o  . loc = { start : head.loc.start }  ;
+          o  . start = head. start ; 
+          o  . operator = this.next () . contents ; 
+          o  . left = n;
+          o  . pDepth = 0;
+          o  .right = core( this.parseNonSeqExpr(
+            this. parseExprHeadOrYield(), 0, cFlags_For )
           );
 
-         return this.end(head, o ); 
+          return this.end( o ); 
 
       case 'Identifier' :
         switch ( o.contents ) {
             case 'in':
             case 'of':
-            if (cFlags_For & /* cfFor */ 2  ) {
+            if (cFlags_For &  2  ) {
               if (breakIfLessThanThis !==0 || hasPrefixOrPostfix) this.err( head.type + ' is not a valid assignable' );
-
-            return head;
+              return head;
             }
 
             case 'instanceof': 
                prec = 0x9B;
                break;
 
-            default : return head
+            default : return head;
         }
-
         break;
 
      default:
         return head;
 
     }
-
     precOrAssocDistance = prec - breakIfLessThanThis;
     if (precOrAssocDistance !==0 ? precOrAssocDistance < 0 : (prec & 1)) return head;
 
     n = core(head );
+    o =  this. peek  ;
 
-    head = this.start ( this.next(), head );
-
-    head. type = (prec===0x09 || prec === 0x0B ) ? 'LogicalExpression' : 'BinaryExpression', 
-    head. operator =o,
-    head. right = core (o =this.parseNonSeqExpr(this.parseExprHead(), prec, cFlags_For )),
-    
-    head. left = n;
-     
-   ; this.end(head, o ); 
-
+    o  . type = (prec===0x09 || prec === 0x0B ) ? 'LogicalExpression' : 'BinaryExpression';
+    o  . loc  = { start : head. loc. start }  ; 
+    o  . start  = head. start ;     
+    o  . operator = this.next   () .contents ;
+    o. right = core(this.parseNonSeqExpr(this.parseExprHead(),prec,cFlags_For));
+    o. left = n;
+    head =  this.end(o); 
  }
-
 };
+
+
 
 lp . parseExprHeadOrYield = function ( cFlags_For_Sh_Non ) {
        return this.peek.contents==='yield' ?
@@ -1439,13 +1355,13 @@ lp. parseStatementOrID = function (n) {
 
   if (c.length > 10) return this.id();
   switch (c.length) {
-    case 1: return (this.id());
+    case 1: return this.id();
     case 2:
       switch (c) {
         case 'do': parse = lp.parseDoWhileStatement; break;
         case 'if': parse = lp.parseIfStatement; break;
         case 'in': break;
-        default: {return (this.id());}
+        default: return this.id();
       }
       break;
 
@@ -1456,7 +1372,7 @@ lp. parseStatementOrID = function (n) {
         case 'try': parse = lp.parseTryStatement; break;
         case 'let':
         case 'var': return this. parseVariableDeclaration(c );
-        default: {return (this.id());}
+        default: return this.id();
       }
       break;
    case 4:
@@ -1470,14 +1386,13 @@ lp. parseStatementOrID = function (n) {
           break;
        
         case 'with': parse = lp. parseWithStatement; break;
-
         default: return this.id();
       }
       break;
 
     case 5:
       switch (c) {
-        case 'super': n .type = ('Super'); if ( this.startStmt ) this.startStmt = false;return this.next ();
+        case 'super': n .type = 'Super'; if ( this.startStmt ) this.startStmt = false;return this.next ();
         case 'break': parse = (lp.parseBreakStatement); break;
         case 'catch': return;
         case 'class':
@@ -1485,54 +1400,44 @@ lp. parseStatementOrID = function (n) {
            _n =n;
 
            var scopeFlags = this.scopeFlags; 
-          
-            n = this.next (); 
+           n = this.next (); 
+           if ( this.startStmt ) { 
+                _s = this.startStmt  ;
+                this.startStmt = false ;
+                n. type = 'ClassDeclaration';
+                n. id   = ( this.peek.type === 'id' && this.id()) || this.err ('id');
+           }
+           else  {                     
+                n. type = 'ClassExpression';
+                n. id   = ( this. peek. type === 'id' && this.id () ) || null;
+           }
 
-            this.startStmt ?
+           if ( this.peek.contents === 'extends' ) {
+              this.next ();
+              n.superClass = this. parseNonSeqExpr(this.parseExprHeadOrYield(),0,0);
+           }
 
-               ( n. type = 'ClassDeclaration',
-                n. id = ( this. peek. type === 'id' && this.id () ) || this.err ( 'id ' )
-
-               ) :
-                      
-          ( n. type = 'ClassExpression',
-              ( ( n ) . id ) = ( this. peek. type === 'id' && this.id () ) || null );
-
-            if ( this. peek. contents === 'extends' ) {
-               this.next ();
-               n.superClass = this. parseNonSeqExpr ( this.parseExprHeadOrYield(),0,0);
-            }
-
-            else 
+           else 
               n. superClass = null;
 
-            c = [];
-            n. body = { type : 'ClassBody', body : c, loc : {} };
+           c = [];
+           n.body = { type : 'ClassBody', body : c, loc : {} };
+           this.expect ( '{' );
+           this.scopeFlags = 0x020 ;
+           while ( _n = this. parseProperty (  0x010  ) ) c. push ( _n );
+           this.scopeFlags = scopeFlags;
+           if ( c.length ) { this.start ( n.body, c[0]); this.end(n.body, c[c.length- 1 ]); }
+           else { n.body.start = n.body.end = 0; n.body.loc.start = n.body.loc.end = { li : 0, c : 0 }; } 
 
-            this.expect ( '{' );
-             
-             this.scopeFlags = 0x020 ;
-                             
-             while ( _n = this. parseProperty ( /* METHD */ 0x010  ) ) {
-                              c. push ( _n );
-            }
-
-            this.scopeFlags = scopeFlags;
-          
-            if ( c.length ) { this.start ( n.body, c[0]); this.end(n.body, c[c.length- 1 ]); }
-            else { n.body.start = n.body.end = 0; n.body.loc.start = n.body.loc.end = { li : 0, c : ( ( 0) ) }; } 
-
-            if ( this.startStmt ) { this.startStmt = false; this.foundStmt = true; }
-
-        return this.end(n, this.expect('}' ));
+           if ( _s ) { this.foundStmt = true; }
+           return this.end(n, this.expect('}'));
 
         case 'const': return this. parseVariableDeclaration ( c );
         case 'throw': parse = (lp.parseThrowStatement); break;
         case 'while': parse = lp.parseWhileStatement; break;
         case 'yield': return;
-        case 'false': n. type = ( 'Literal' ); n. value = false; if ( this.startStmt ) this.startStmt = false;return this.next (); 
- 
-        default: {return (this.id());}
+        case 'false': n. type = 'Literal'; n. value = false; if ( this.startStmt ) this.startStmt = false;return this.next (); 
+        default: return this.id();
       }
       break;
 
@@ -1544,7 +1449,6 @@ lp. parseStatementOrID = function (n) {
         case 'import': parse = lp.stmtPrse_import; break;
         case 'return': parse = lp.parseReturnStatement; break;
         case 'switch': parse = lp.parseSwitchStatement; break;
-
         default: return this.id();
       }
 
@@ -1581,7 +1485,7 @@ lp. parseStatementOrID = function (n) {
 
               if ( c ) { this.foundStmt = true; }
 
-              return (n ); 
+              return n; 
 
         case 'debugger': 
             if ( this.startStmt ) {
@@ -1591,8 +1495,7 @@ lp. parseStatementOrID = function (n) {
                 var semi = this.semi();
                 this.foundStmt = true;
                 if ( semi ) return this.end(n, semi );
- 
-            return n; 
+                return n; 
             }
 
             this. err ('not stmt ' );
@@ -1621,16 +1524,16 @@ return n;
 };
 
 lp . parseRegExpLiteral = function() {
-     var c = this.c, l = this.src, e = l.length;
-
-     var n = { regex : { }, type : 'Literal' };
-
+     var c = this.c,
+         l = this.src, 
+         e = l.length;
+    
+     var n = { regex : {}, type : 'Literal' };
      n.loc = {start:{line: this.li, column : this.col-1}};
-     n . start = this.c - 1;
+     n.start = this.c - 1;
 
      var b = false;
      var o;
-
      var _l = "";
 
      L:
@@ -1638,67 +1541,69 @@ lp . parseRegExpLiteral = function() {
 
        o = l.charCodeAt(c);
        switch ( o ) {
-         case /* _sbrO */ 91: if ( !b ) b = true; break;
-         case /* _bs */ 92 : ++c; break;
-         case /* _sbrC */ 93 : if ( b ) b = false; break;
-         case /* _div */ 47 :
+         case  91:
+             if ( !b ) b = true;
+             break;
+         case  92 : ++c; break;
+         case  93 :
+             if ( b ) b = false;
+             break;
+         case  47 :
             if ( b ) break;
             break L;
 
-        default:if ( o >= 0x0D800 && o <= 0x0DBFF ) { this.col--; }
-
+         default:
+            if ( o >= 0x0D800 && o <= 0x0DBFF ) { this.col--; }
        }
 
        c++;
-
      }
  
-     l.charCodeAt(c ) === /* _div */ 47 || this.err('expcted /');
+     if ( l.charCodeAt(c ) !==  47  ) this.err('expcted /');
      
      var _g = 0;
   
      o = 0;
 
-      L :
+     L :
      while ( o <= 5 ) {
         switch ( l.charCodeAt ( ++c ) ) {
-            case /* g_ */ 0x67  : ( _g & /* g_o */ 2  ) && this.err ( 'g already there' ); _g |= /* g_o */ 2 ; break; 
-            case /* u_ */ 0x075  : ( _g & /* u_o */ 4  ) && this.err ( 'u already there' ); _g |= /* u_o */ 4 ; break; 
-            case /* y_ */ 0x079  : ( _g & /* y_o */ 8  ) && this.err ( 'y already there' ); _g |= /* y_o */ 8 ; break; 
-            case ( /* m_ */ 109  ) : ( _g& /* m_o */ 0x020  ) && this.err ( ' m already there' ); _g |= /* m_o */ 0x020 ; break;
+            case  0x67  : ( _g &  2  ) && this.err ( 'g already there' ); _g |=  2 ; break; 
+            case  0x075  : ( _g &  4  ) && this.err ( 'u already there' ); _g |=  4 ; break; 
+            case  0x079  : ( _g &  8  ) && this.err ( 'y already there' ); _g |=  8 ; break; 
+            case (  109  ) : ( _g&  0x020  ) && this.err ( ' m already there' ); _g |=  0x020 ; break;
+            case  105  : ( _g&  0x080  ) && this.err ( ' i already there' ); _g |=  0x080 ; break; 
+           
             default : break L;
     
-            case /* i_ */ 105  : ( _g& /* i_o */ 0x080  ) && this.err ( ' i already there' ); _g |= /* i_o */ 0x080 ; break; 
           }
-
          o ++; 
      }
 
-     n. regex . flags = l.substring(c-o, c);
-     n. regex . pattern = n.contents = l.substring(this.c, c-o -( 1 ) ); 
+     n.regex.flags = l.substring(c-o, c);
+     n.regex.pattern = n.contents = l.substring(this.c, c-o-1 ); 
     
      this.col += ( ( c ) - this.c ) 
      n.loc.end = { l: this.li, c : this.col };
  
      if ( !( _g & ( ALL ^ _g ) ) ) n. value = new RegExp ( n. regex . pattern, n. regex . flags ); 
      else { new RegExp ( n. regex . pattern ); n. value = null; } 
-
      this.c = c;
      n. end = this.c;
-
      this.peek = n;
 
-return this. next ();
-}
+     return this. next ();
+};
 
-lp . parseTemplateLiteral = function() {
-  var c = this.c, l = this.src, e = l.length;
+lp.parseTemplateLiteral = function() {
+  var c = this.c,
+      l = this.src,
+      e = l.length;
+
   var i, _e;
   var str = [], nexpr = [];
-
   var v = "", v_start = 0;
   var r_start = 0;
-
   var n = { 
         type : ( 'TemplateLiteral' ),
         quasis: str,
@@ -1707,10 +1612,10 @@ lp . parseTemplateLiteral = function() {
   };
 
   var li = this. li, col = this.col; 
-  while ( c < e && ( i = ( l.charCodeAt ( c ) ), i !==/* _tick */ 96 ) ) {
+  while ( c < e && ( i = ( l.charCodeAt ( c ) ), i !== 96 ) ) {
     switch ( i ) {
-      case /* _$ */ 36  :
-        if ( l.charCodeAt(c + 1 ) === ( /* _cubO */ 123) ) {
+      case  36  :
+        if ( l.charCodeAt(c + 1 ) ===  123 ) {
            v += l.substring(v_start, c );
           _e = {
              type : 'TemplateElement', start : r_start,
@@ -1726,7 +1631,8 @@ lp . parseTemplateLiteral = function() {
           this.c = c + 2; this.next()
           nexpr . push ( this.parseExpr () );
           ( this. peek . contents !=='}' && this.err( ( 'must }' )) );
-          v_start = r_start = c = this.c; li = this.li, col = this. col;
+          v_start = r_start = c = this.c;
+          li = this.li, col = this. col;
         }
 
         else
@@ -1734,51 +1640,67 @@ lp . parseTemplateLiteral = function() {
      
         continue;
 
-      case /* _cret */ 13: v += l.substring(v_start, c); v += '\n'; if ( l.charCodeAt(c + 1 ) === /* _lf */ 10 ) c++; v_start = ++c; this.li++; continue;
-      case /* _lf */ 10 : v += l.substring(v_start, c); v += '\n'; v_start = ++c; this.li++; continue; 
-      case 0x2028 :
-      case ((0x202<<4) + 9 ) :
+      case  13:
+          v += l.substring(v_start, c);
+          v += '\n'; 
+          if ( l.charCodeAt(c + 1 ) ===  10 )
+             c++;
+
+          v_start = ++c;
+          this.li++;
+          continue;
+
+      case  10 :
+          v += l.substring(v_start, c);
+          v += '\n';
+          v_start = ++c;
+          this.li++;
+          continue;
+ 
+      case 0x2028:
+      case 0x2029:
          v += l.substring(v_start, c);
          v += l.charAt(c);
-
          v_start = ++c; 
          this.li ++; 
-
          continue;
 
-      case /* _bs */ 92 :
-
+      case  92 :
         v += l.substring(v_start, c ); 
         switch ( l.charCodeAt ( ++ c ) ) {
-          case /* _bs */ 92 : v += '\\'; break; case /* _dq */ 34 : v +='\"'; break;case /* _sq */ 39 : v += '\''; break; case /* _b */ 98 : v += '\b'; break;
-          case /* _v */ 0x076  : v += '\v'; break; case /* _f */ 102 : v += '\f'; break; case /* _t */ 116  : v += '\t'; break; case /* _r */ 0x072  : v += '\r'; break; 
-          case /* _n */ 0x6e  : v += '\n'; break;
-          case /* _u */ 117 :
+          case  92 : v += '\\'; break;
+          case  34 : v +='\"'; break;
+          case  39 : v += '\''; break;
+          case  98 : v += '\b'; break;
+          case  0x076  : v += '\v'; break;
+          case  102 : v += '\f'; break;
+          case  116  : v += '\t'; break;
+          case  0x072  : v += '\r'; break; 
+          case  0x6e  : v += '\n'; break;
+          case  117 :
              this.c=c; var e = this. peekUSeq ();
-            
-             if ( e >= 0x0D800 && e <= 0x0DBFF ) { this.c ++; v += String.fromCharCode ( e, ( ( this ) . peekTheSecondByte () ) ); }
+             if ( e >= 0x0D800 && e <= 0x0DBFF ) { this.c ++; v += String.fromCharCode(e, this.peekTheSecondByte()); }
              else { v += String.fromCharCode(e );}
              c = this.c; 
-                   
              break;
 
-          case /* _cret */ 13: if ( l.charCodeAt(c + 1 ) === /* _lf */ 10 ) c++; case /* _lf */ 10 : case 0x2028 : case ((0x202<<4) + 9 ) : this.li ++; break;
+          case  13: if ( l.charCodeAt(c + 1 ) ===  10 ) c++;
+          case  10 :
+          case 0x2028:
+          case 0x2029: this.li ++; break;
 
           default : v += l.charAt(c); break;
         }
 
         v_start = ++c;
         continue;
-
     } 
 
     c++;
   }
 
   if ( c > r_start ) {
-
-    if ( c > v_start )             v += ( ( l.substring ( v_start, c) ) ); 
-      
+    if ( c > v_start ) v +=  l.substring ( v_start, c); 
      _e = {
         type : 'TemplateElement',
         start : r_start ,
@@ -1792,13 +1714,13 @@ lp . parseTemplateLiteral = function() {
      _e .tail = true;
   }
 
-  ( l[ c ] === '`' || this.err ( '` expcted') );
+  if ( l[ c ] === '`' ) this.err ( '` expcted');
   n.loc.end = { l: this.li, c :this.col }
   this.c = ++c;
   this.peek = n;
-  n = this.next ()
-  return n
-}
+  n = this.next ();
+  return n;
+};
 
 lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
   var head = this.peek; 
@@ -1808,123 +1730,120 @@ lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
       head = this.parseStatementOrID (head); 
       if ( this.foundStmt ) { return head; } 
       if ( this.foundUnaryDVT ) { 
-        if (cFlags_For_Sh_Non_Ex & /* cfExpectHeadBePrim */ 0x020 ) { this.err('Unexpected unary'); }
-
+        if (cFlags_For_Sh_Non_Ex &  0x020 ) { this.err('Unexpected unary'); }
         this.foundUnaryDVT = false;
-        head = {
-             type : 'UnaryExpression', 
-             operator : this.next(),
-             loc: {},
-             prefix : true
+        head  = this. start ( this. peek ) ;{
+        head  .     prefix  =  true   ;
+        head  .     type   =  'UnaryExpression' ; 
+        head  .     operator = this.next().contents ;
+        head. argument = core( this.parseNonSeqExpr(this.parseExprHead(),0xAE, cFlags_For_Sh_Non_Ex &  2   )), 
 
-        };
-
-        head. argument = core(n= this.parseNonSeqExpr(this.parseExprHead(),0xAE, cFlags_For_Sh_Non_Ex & /* cfFor */ 2   )), 
-        this.start ( head, head .operator );
-
-      return this.end(head, n );
-
+        return this.end(head );
      }
   }
 
   else {
       if ( this. startStmt ) this.startStmt = false;
       switch (head.type) {
-            case '[' : head = this. parseArrayExpression( cFlags_For_Sh_Non_Ex &    (/* CFLAGS_PTRN_MEM */ 9  ) ); if ( this. propThatMustBeInAnAssig ) return head; break;
-            case '(' : head = this. parseParen(); if ( this . funcBecause ) return head; break;
-            case '{' : head = this. parseObjectExpression( cFlags_For_Sh_Non_Ex & (/* CFLAGS_PTRN_MEM */ 9 ) ); if ( this. propThatMustBeInAnAssig ) return head; break;
+            case '[' :
+                   head = this. parseArrayExpression( cFlags_For_Sh_Non_Ex & 9 );
+                   if ( this. propThatMustBeInAnAssig ) return head;
+                   break ;
+            case '(' :
+                   head = this. parseParen();
+                   if ( this . funcBecause ) return head;
+                   break ;
+            case '{' :
+                   head = this. parseObjectExpression( cFlags_For_Sh_Non_Ex & 9 );
+                   if ( this. propThatMustBeInAnAssig ) return head;
+                   break;
             case '/' : head = this. parseRegExpLiteral (); break;
             case '`' : head = this. parseTemplateLiteral (); break;
-            case 'Literal': head = this.next(); break;
+            case 'Literal': head = this.foldnext (); break;
 
             case '++': 
             case '--':
-               if (cFlags_For_Sh_Non_Ex & /* cfExpectHeadBePrim */ 0x020  ) this.err('Unexpected unary');
-               return this.next();
+               if (cFlags_For_Sh_Non_Ex &  0x020  ) this.err('Unexpected unary');
+               this.start(this.peek ) ;
+               return  this.next();
 
             case '~':
             case '!':
             case '-':
             case '+':
-               if (cFlags_For_Sh_Non_Ex & /* cfExpectHeadBePrim */ 0x020 ) this.err('Unexpected unary');
-              
-               head = {
-                    type : 'UnaryExpression',
-                    operator : this.next(), 
-                    loc: {},
-                    prefix : true 
-
-               };
-            
-               head. argument = core( n= this.parseNonSeqExpr(this.parseExprHead(),0xAE,0)), 
-               this.start ( head, head .operator );
-
-               return this.end(head, n); 
+               if (cFlags_For_Sh_Non_Ex &  0x020 ) this.err('Unexpected unary');
+               head  =  this. start ( this. peek ) ; 
+             
+               head. type = 'UnaryExpression';
+               head. operator = this.next().contents;
+               head. argument = core( this.parseNonSeqExpr(this.parseExprHead(),0xAE,0)); 
+               head. prefix = true  ;
+               return this.end(head); 
 
             default:
-               if ( (cFlags_For_Sh_Non_Ex) & /* cfExpectHeadBePrim */ 0x020  ) this.err(this. peek + ' is not a vaild start for an expr' ); return; 
-
+               if ( (cFlags_For_Sh_Non_Ex) &  0x020  ) this.err(this. peek + ' is not a vaild start for an expr' );
+               return; 
     }
   }
 
-   n = core( head );
+  n = core( head );
 
-   while ( true ) {
-        switch (this.peek.contents) {
+  while ( true ) {
+    switch (this.peek.contents) {
 
-          case '.':
-               head = this.start (this.next(), head);
-                
-               head. type = 'MemberExpression';
-               head. property = this.memID();
-               head. object = n;
-               head. computed= false; 
+      case '.':
+           this. peek  . object = n;
+           n  = this.next();
+           n  . type = 'MemberExpression';
+           n  . loc  = { start : head. loc. start }  ;
+           n  . start  = head.  start ; 
+           n  . property = this.memID();
+           n  . computed= false; 
+           head = this.end( n );
+           continue;
 
-               n = this.end( head, head . property );
-               continue;
+     case '[':
+        this. peek  . object = n;
+        n  = this.next();
 
-         case '[':
-            
-            head = this.start (this.next(), head);
-           
-            head. type = 'MemberExpression';
-            head. property = core ( this. parseExpr() );     
-            head. object = n;
-            head. computed= true ; 
+        n  . type = 'MemberExpression';
+        n  . loc  = { start : head. loc. start }  ;
+        n  . start  = head. start ; 
+        n  . property = core ( this. parseExpr() );     
+        n  . computed= true ; 
+        this.expect(']');
+        head    = this.end(n );
+        continue;
 
-            n = this.end( head, this.expect(']'));
-            continue;
+     case '(':
+          this. peek  . callee = n                  ;
+          n  = this.next   () ;  
+          n  . type= 'CallExpression'      ;
+          n  . loc = { start : head. loc. start } ;
+          n  . start = head. start ; 
+          n  . arguments = this. parseArgList() ;
+          this.expect(')');
+          head    = this.end (n );
+          continue;
 
-         case '(':
+      case '`' :
+        
+          n =  {
+              type : 'quasi',
+              quasi : this  . parseTemplateLiteral (),
+              start : head  .                            start ,
+              loc : { start : head. loc. start   },
+              tag : n
+         }; 
 
-              head = this.start ( this.next(), head );
-                 
-              head. type= 'CallExpression'      ; 
-              head. callee = n                  ; 
-              head. arguments = this. parseArgList() ;
+         head  = this.end (n ); 
+         continue; 
 
-             n = this.end (head, this.expect(')'));
-             continue;
-
-          case '`' :
-            
-             head = n = this.start ( {
-                  type : 'quasi',
-                  quasi : this . parseTemplateLiteral (),
-                  loc : {},
-                  tag : n
-             }, head ); 
-
-             this.end (head, head.quasi ); 
-             continue; 
-
-          default: return head;
-        }
-
-      } 
+      default: return head;
+    }
+  } 
 
   return head;
-
 };
 
 lp.parseNewHead = function () {
@@ -1952,7 +1871,7 @@ lp.parseNewHead = function () {
     case '{': head = this. parseObjectExpression(); break;
     case '/': head = this. parseRegExpLiteral (); break;
     case '`': head = this. parseTemplateLiteral (); break;
-    case 'Literal': head = this.next(); break;
+    case 'Literal': head = this.foldnext(); break;
     case 'Identifier' : 
       head = this.parseStatementOrID (head);
       if ( this. foundUnaryDVT ) this.err ( this. peek. contents + ' can not come in the head of new' ); break;
@@ -1965,27 +1884,30 @@ lp.parseNewHead = function () {
   while ( true ) {
     switch (this.peek.contents) {
       
-       case '.':
-         head = this.start (this.next(), head);
-         
-         head. type = 'MemberExpression';
-         head. property = this.memID();
-         head. object = n;
-         head. computed = false;
-           
-         n = this.end( head, head. property );
-         continue;
+     case '.':
+           this. peek  . object = n;
+           n  = this.next();
+           n  . type = 'MemberExpression';
+           n  . loc  = { start : head. loc. start }  ;
+           n  . start  = head.  start ;
+           n  . property = this.memID();
+           n  . computed= false;
+           head = this.end( n );
+           continue;
 
-      case '[':
-         head = this.start (this.next(), head);
-         
-         head. type = 'MemberExpression'           ; 
-         head. property = core ( this. parseExpr() );
-         head. object = n                          ;
-         head. computed= true                    ;
+     case '[':
+        this. peek  . object = n;
+        n  = this.next();
 
-         n = this.end( head, this.expect(']'));
-         continue;
+        n  . type = 'MemberExpression';
+        n  . loc  = { start : head. loc. start }  ;
+        n  . start  = head. start ;
+        n  . property = core ( this. parseExpr() );
+        n  . computed= true ;
+        this.expect(']');
+        head    = this.end(n );
+        continue;
+
 
        case '(':
           this.next();
@@ -2059,12 +1981,12 @@ lp.parseArrayExpression = function (cFlags_Sh_Non ) {
        e .push (core(this.parseNonSeqExpr(_e,0,0)));
 
        if ( this. propThatMustBeInAnAssig ) {
-            if ( !propThatMustBeInAnAssig ) { propThatMustBeInAnAssig = this.propThatMustBeInAnAssig; p = /* cfNonAssigNotValid */ 1  ; }
+            if ( !propThatMustBeInAnAssig ) { propThatMustBeInAnAssig = this.propThatMustBeInAnAssig; p =  1  ; }
             this. propThatMustBeInAnAssig =null;
        }
 
        else if ( this. mustNot ) {
-         if ( !hasPropThatMustNot ) { hasPropThatMustNot = this. mustNot; p = /* cfShortNotValid */ 8 ; }
+         if ( !hasPropThatMustNot ) { hasPropThatMustNot = this. mustNot; p =  8 ; }
          this. mustNot = false;
        }
     }
@@ -2275,14 +2197,14 @@ lp.parseObjectExpression = function (cFlags_Sh_Non ) {
      prop .push(e);
 
      if ( this. propThatMustBeInAnAssig ) {
-        if ( !propThatMustBeInAnAssig ) { propThatMustBeInAnAssig = this. propThatMustBeInAnAssig; p = /* cfNonAssigNotValid */ 1  ; }
+        if ( !propThatMustBeInAnAssig ) { propThatMustBeInAnAssig = this. propThatMustBeInAnAssig; p =  1  ; }
         this. propThatMustBeInAnAssig = null;
      }
 
      else if ( this. mustNot ) {
        if ( !hasPropThatMustNot ) { 
              hasPropThatMustNot = this. mustNot;
-             p = /* cfShortNotValid */ 8 ;
+             p =  8 ;
        } 
 
        this. mustNot = false;
@@ -2431,7 +2353,7 @@ lp.parseParen = function () {
 lp . parseVariableDeclaration = function(kind, cFlags_For ) {
 
      if ( this.startStmt ) this.startStmt = false;
-     else  if ( ! ( cFlags_For & /* cfFor */ 2  ) ) { this.err ( kind + 'is not a vaild name ' ); }
+     else  if ( ! ( cFlags_For &  2  ) ) { this.err ( kind + 'is not a vaild name ' ); }
  
      var dec = [];
      var n = this.next ();
@@ -2452,7 +2374,7 @@ lp . parseVariableDeclaration = function(kind, cFlags_For ) {
          e = this.parseVariableDeclarator(cFlags_For ); 
      } while ( e ) ;
 
-     if ( ! ( cFlags_For & /* cfFor */ 2  ) ) {
+     if ( ! ( cFlags_For &  2  ) ) {
        this.foundStmt = true;
        e = this.semi ();
      }
@@ -2485,12 +2407,12 @@ lp . parseFor = function() {
   switch (e = this.peek.contents ) {
      case 'var':
      case 'let':
-     case 'const' : e = this. parseVariableDeclaration(e, /* cfFor */ 2  ); break;
+     case 'const' : e = this. parseVariableDeclaration(e,  2  ); break;
 
      default :
        e = this. parseExprHead ();
        if ( this. propThatMustBeInAnAssig ) this.canHaveNoAssig = true;
-       else if ( e ) { e = this.parseExpr(e, /* cfFor */ 2  ); } 
+       else if ( e ) { e = this.parseExpr(e,  2  ); } 
        else e = null; 
   }
 
@@ -2546,7 +2468,7 @@ lp . parseFor = function() {
 
     ++ this. iteD;
     var scopeFlags = this.scopeFlags;
-    this.scopeFlags |= ( /* breakFlag */ 4 |/* continueFlag */ 8  );
+    this.scopeFlags |= (  4 | 8  );
     n = this.end(n, n. body = this.parseStatement () );
 
     this.scopeFlags = scopeFlags;
@@ -2560,7 +2482,7 @@ var coreBrack = function(n) { return n. type === '[' ? n. expr : n   }
 
 lp.parseProperty = function (cmn) {
 
-  var e, Prop = ( cmn === /* METHD */ 0x010  ) ? 'MethodDefinition' : 'Property', n = null;
+  var e, Prop = ( cmn ===  0x010  ) ? 'MethodDefinition' : 'Property', n = null;
   switch ( this. peek. type ) {
     case 'Identifier' : { n = this. peek. value;} break;
     case 'op' : n = this. peek. contents; 
@@ -2575,12 +2497,12 @@ lp.parseProperty = function (cmn) {
         n = this.next();
        
         if (e = this.parseMemName()) {
-           if ( cmn & /* cfNonAssigNotValid */ 1   ) this.err('get' ); 
+           if ( cmn &  1   ) this.err('get' ); 
      
            n = this.start ( { type : Prop,  key : coreBrack (e), kind : 'get', computed : ( e. type === '[' ), loc : {} }, _static || n);
 
 
-           if ( cmn !==/* METHD */ 0x010  ) {  n.shorthand =false; n. method= false;   }
+           if ( cmn !== 0x010  ) {  n.shorthand =false; n. method= false;   }
            else n.static = _static !==null      ;
 
            this.end(n, n.value = this.parseArgsAndBody(0, this.start ( { 
@@ -2590,7 +2512,7 @@ lp.parseProperty = function (cmn) {
            generator : false
            }, e ) ) );
 
-           if ( cmn !==/* METHD */ 0x010  ) this. mustNot = true;
+           if ( cmn !== 0x010  ) this. mustNot = true;
        
         return n  ;
         }
@@ -2601,10 +2523,10 @@ lp.parseProperty = function (cmn) {
 
       n = this.next();
       if ( e = this.parseMemName()) {
-         if ( cmn & /* cfNonAssigNotValid */ 1   ) this.err('set' ); 
+         if ( cmn &  1   ) this.err('set' ); 
          n = this.start ( { type : Prop,  key : coreBrack (e), kind : 'set', loc: {}}, n ); 
 
-         if ( cmn !==/* METHD */ 0x010  ) n. method = n. shorthand = false;
+         if ( cmn !== 0x010  ) n. method = n. shorthand = false;
          else n.static = _static !==null; 
 
          n. computed = ( e .type === '[' ); 
@@ -2615,7 +2537,7 @@ lp.parseProperty = function (cmn) {
            generator : false
          }, e) ) );
 
-         if ( cmn !==/* METHD */ 0x010  ) this. mustNot = true;
+         if ( cmn !== 0x010  ) this. mustNot = true;
 
       return n
       }
@@ -2623,12 +2545,12 @@ lp.parseProperty = function (cmn) {
       break L;
 
     case '*':
-      if ( cmn & /* cfNonAssigNotValid */ 1   ) this.err('sh and * ' ); 
+      if ( cmn &  1   ) this.err('sh and * ' ); 
 
       n = this.next();
       e = this.parseMemName() || this.err('[ or and expr expcted', this.peek );
   
-      n = this.start ({ type : Prop, key : coreBrack(e), kind : ( cmn === /* METHD */ 0x010  ?
+      n = this.start ({ type : Prop, key : coreBrack(e), kind : ( cmn ===  0x010  ?
                                                                   (n.contents === 'constructor' && this.err('can not be a g ' ) ) || ( 'method' ) :
                                                                   'init'
  
@@ -2637,16 +2559,16 @@ lp.parseProperty = function (cmn) {
       }, n);
     
       n.computed = e. type === '[';
-      if ( cmn !==/* METHD */ 0x010  ) {  n.method = true;  n.shorthand = false;   }
+      if ( cmn !== 0x010  ) {  n.method = true;  n.shorthand = false;   }
 
       this.end(n, n. value = this. parseArgsAndBody(-1, this.start ( { type :'FunctionExpression', id :   ( coreBrack (e)   )  , loc : {}, generator : true }, e ) ) );
-      if ( cmn !==/* METHD */ 0x010  ) this. mustNot = true;
+      if ( cmn !== 0x010  ) this. mustNot = true;
       else n.static = _static !==null
      
       return n  ;
 
        case 'static' :
-          if ( cmn === /* METHD */ 0x010  && !_static ) {
+          if ( cmn ===  0x010  && !_static ) {
              n = null;
              _static = this.next ();
              switch ( this. peek. type ) {
@@ -2666,12 +2588,12 @@ lp.parseProperty = function (cmn) {
 
   switch (this.peek.type) {
     case '(':
-       if ( cmn & /* cfNonAssigNotValid */ 1   ) this.err('paren ' ); 
+       if ( cmn &  1   ) this.err('paren ' ); 
 
        n = this.start ( {
          type: Prop,
          key : coreBrack (n),
-         kind : ( cmn === /* METHD */ 0x010  ? n.contents === 'constructor'? 'constructor' : ( 'method' ) : 'init' ),
+         kind : ( cmn ===  0x010  ? n.contents === 'constructor'? 'constructor' : ( 'method' ) : 'init' ),
          computed : n. type === '[', loc : {},
          value : this . parseArgsAndBody(-1, this.start ( {
                type : 'FunctionExpression',
@@ -2681,15 +2603,15 @@ lp.parseProperty = function (cmn) {
          }, n) )
        }, n);
  
-       if ( cmn !==/* METHD */ 0x010  ) {  n. method = true;  n. shorthand = false;   }
+       if ( cmn !== 0x010  ) {  n. method = true;  n. shorthand = false;   }
        else n.static = _static !==null      ;
   
-       if ( cmn !==/* METHD */ 0x010  ) this. mustNot = true;
+       if ( cmn !== 0x010  ) this. mustNot = true;
  
        return this.end (n, n . value );
  
      case ':':
-       cmn === /* METHD */ 0x010  && this.err( 'Unexpected ' + this. peek. contents );
+       cmn ===  0x010  && this.err( 'Unexpected ' + this. peek. contents );
 
 
        e = n;
@@ -2711,14 +2633,14 @@ lp.parseProperty = function (cmn) {
 
     default : 
 
-      cmn === /* METHD */ 0x010  && this.err( 'Unexpected ' + this. peek. contents );
+      cmn ===  0x010  && this.err( 'Unexpected ' + this. peek. contents );
       var _r;
       e = n; 
          
       if (n. type !=='Identifier' ) this.err('id expcted'); 
 
         if ( this. peek.contents === ('=' ) ) {
-          if ( cmn& /* cfShortNotValid */ 8  ) this. err( 'no' );
+          if ( cmn&  8  ) this. err( 'no' );
           e = this.start ( { left : n, type : 'AssignmentPattern', loc : {} }, n);
           this.next ();  e . right = core ( _r = this. parseNonSeqExpr ( this. parseExprHeadOrYield(), 0,  0) ) ; 
           this.end( e, _r ) ;
@@ -2934,7 +2856,7 @@ lp . parseArgsAndBody = function (argLen, n, cFlags_For ) {
   this.expect(')' );
 
   r  = this. scopeFlags ;
-  if ( n. generator ) r |= /* yieldFlag */ 0x010  ;
+  if ( n. generator ) r |=  0x010  ;
  
   if ( this.peek.contents === '{' ) { _n =  n. body = ( this . parseFuncBody() )   ;  }
 
@@ -2970,14 +2892,14 @@ lp.parseFuncBody = function() {
 
      var scopeFlags = this.scopeFlags;
      if ( scopeFlags & 0x020 ) {
-         if ( scopeFlags & /* funcFlag */ 2  ) this.scopeFlags = /* funcFlag */ 2 ;
-         else this.scopeFlags = ( 0x020 | /* funcFlag */ 2  );
+         if ( scopeFlags &  2  ) this.scopeFlags =  2 ;
+         else this.scopeFlags = ( 0x020 |  2  );
      }
 
      else
-       this.scopeFlags = /* funcFlag */ 2 ;
+       this.scopeFlags =  2 ;
 
-     if ( scopeFlags & /* yieldFlag */ 0x010  ) this.scopeFlags |= (      /* yieldFlag */ 0x010    )  ;
+     if ( scopeFlags &  0x010  ) this.scopeFlags |= (       0x010    )  ;
  
 
      var stmts = [],
@@ -3051,8 +2973,8 @@ var loc = function(n ) {
       }    
    
       switch ( r = src.charCodeAt ( c ) ) {
-           case /* _cret */ 13 : if ( /* _lf */ 10 === src.charCodeAt ( c  +   1 ) ) c ++; 
-           case /* _lf */ 10 :
+           case  13 : if (  10 === src.charCodeAt ( c  +   1 ) ) c ++; 
+           case  10 :
            case 0x2028:
            case ((0x202<<4) + ( ( 9 ) )) :
               li ++;
@@ -3099,6 +3021,9 @@ var compMain = function(main, n, from ) {
    }
 };
 
+ exports.lube = {};
+ exports.lube.parse = function(src) { return new Parser(src).parseProgram   () ; } 
+ exports.lube.Parser=                            Parser;
 
 
 
@@ -3111,3 +3036,5 @@ var compMain = function(main, n, from ) {
 
 
 
+
+}) ( (typeof exports==="object") ? exports :  (typeof window==="undefined")? this : window )
