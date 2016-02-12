@@ -1739,7 +1739,7 @@ lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
       if ( this.foundUnaryDVT ) { 
         if (cFlags_For_Sh_Non_Ex &  0x020 ) { this.err('Unexpected unary'); }
         this.foundUnaryDVT = false;
-        head  = this. start ( this. peek ) ;{
+        head  = this. start ( this. peek ) ;
         head  .     prefix  =  true   ;
         head  .     type   =  'UnaryExpression' ; 
         head  .     operator = this.next().contents ;
@@ -2952,15 +2952,6 @@ var compMain = function(main, n, from ) {
  exports.lube = {};
  exports.lube.parse = function(src) { return new Parser(src).parseProgram   () ; } 
  exports.lube.Parser=                            Parser;
-
-
-
-
-
-
-
-
-
 
 
 
