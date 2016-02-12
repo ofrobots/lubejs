@@ -1,7 +1,6 @@
 // License: (MIT) or  (GPLv2 and above)
 
 
-( function (exports) {   
 'use strict'
 
 var Prser = function (src) {
@@ -3100,8 +3099,6 @@ var compMain = function(main, n, from ) {
    }
 };
 
-exports.lube = {};
-exports.lube.parse = function(src) { return new Prser(src).parseProgram   () ; } 
 
 
 
@@ -3114,4 +3111,3 @@ exports.lube.parse = function(src) { return new Prser(src).parseProgram   () ; }
 
 
 
-}) ( (typeof exports==="object") ? exports :  (typeof window==="undefined")? this : window )
