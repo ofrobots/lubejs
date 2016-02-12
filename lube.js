@@ -101,11 +101,11 @@ lp.nextraw = function () {
   var L = this.skipS();
   if ( L )  return L;
 
-  var peek, n = 0, _c = this.c;
+  var peek, n = null , _c = this.c;
   var r; 
 
-  peek = this.src.charCodeAt(_c);
   if (this.c>=this.src.length) return { type: 'eof', contents: ('<<EOF>>')};
+  peek = this.src.charCodeAt(_c);
   var col = (this.col), li = this.li;
 
   if ( IDHead(peek) ) n = this.readAnIdentifierToken();
@@ -266,10 +266,10 @@ lp.nextraw = function () {
   this.c0  = _c;
   this.col0= col;
   this.li0 = li ;
-  this.col += (n.end - n.start);
+  this.col += ( this.c -     _c );
 //  n.loc = { start: {   line : li, column: col }, end: { line: this.li, column: this.col } };
 
-  if ( ! n.contents ) n.contents = this.src.substring(n.start, n.end);
+  if ( ! n.contents ) n.contents = this.src.substring(this.c, _c );
   n. src = this.src;
   if (!n.type) n.type = n.contents
 
@@ -464,10 +464,9 @@ lp.readAnIdentifierToken = function ( v ) {
     var c = this.c, l = this.src, e = (l.length), peek, r;
     var n = c + 1; // the head is already supplied in v
 
-    var _n = { pDepth : 0, contents: null  , type: 'Identifier', value : null  , name : null }   ;
-
-    while (true ) {
-      if ( IDBody( peek = l.charCodeAt(++c) ) ) continue;
+    var _n = { pDepth : 0, contents: null  , type: 'Identifier', value : null  , name : null , start : this.c, loc : { start :    {  line : this. li, column:  this. col }, end: null }}   ;
+    while ( ++c < e  ) {
+      if ( IDBody( peek = l.charCodeAt(c) ) ) continue;
      
       if (peek ===  92) {
          if ( !v ) v = l. charAt ( n -1 );
@@ -529,7 +528,7 @@ lp.readNumberLiteral = function (peek) {
       e = l.length,
       r = 10,
       v = 0,
-      n = { contents: null, type : 'Literal', start : this.c, loc : { start :    {  line : li, column: col }, end: null } }  ;
+      n = { contents: null, type : 'Literal', start : this.c, loc : { start :    {  line : this. li, column:  this. col }, end: null } }  ;
 
   if (peek ===  48) {
     r = l.charCodeAt(++c);
@@ -640,7 +639,7 @@ lp.readStrLiteral = function (start) {
       _e ;
 
   var v = "", v_start = c;
-  var str = { contents: null, type: 'Literal', value : null  }    ;
+  var str = { contents: null, type: 'Literal', value : null  , start : this.c, loc : { start :    {  line : this. li, column:  this. col }, end: null }}    ;
 
   while (c < e && (i = l.charCodeAt(c)) !== start) {
     switch ( i ) {
@@ -823,14 +822,17 @@ lp . end = function (n) {
   return n;
 };
 
-lp.semi = function () {
+lp.semi = function (n) {
   switch (this.peek.type) {
-    case ';': return this.next();
+    case ';':  this.next(); return this.end   ( n) ;
     case 'eof':
-    case '}': return;
+    case '}': return this.end ( n )  ;
   }
 
   if ( !this.hasL) this.err('EOS expected; found ' + this.peek.contents );
+  return this.end(n)                                                     ;
+
+
 };
 
 lp.parseProgram = function () {
@@ -1053,6 +1055,7 @@ lp.parseSwitchCase = function () {
      else return;
   }
 
+  this.expect (':' ) ;
   n.consequent = this.blck();
   return this.end(n);
 };
@@ -1766,7 +1769,7 @@ lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
                    break;
             case '/' : head = this. parseRegExpLiteral (); break;
             case '`' : head = this. parseTemplateLiteral (); break;
-            case 'Literal': head = this.foldnext (); break;
+            case 'Literal': head = this.end (this.next   () ); break;
 
             case '++': 
             case '--':
@@ -1880,7 +1883,7 @@ lp.parseNewHead = function () {
     case '{': head = this. parseObjectExpression(); break;
     case '/': head = this. parseRegExpLiteral (); break;
     case '`': head = this. parseTemplateLiteral (); break;
-    case 'Literal': head = this.foldnext(); break;
+    case 'Literal': head = this. end ( this.next   ()  ); break;
     case 'Identifier' : 
       head = this.parseStatementOrID (head);
       if ( this. foundUnaryDVT ) this.err ( this. peek. contents + ' can not come in the head of new' ); break;
@@ -1950,7 +1953,7 @@ lp.parseNewHead = function () {
 
 lp.id = function (n) {
   if ( this.startStmt ) this.startStmt = false;
-  return this.next (); 
+  return  this.end  ( this.next ()   )  ; 
 };
 
 lp . parseSpreadElement = function() {
@@ -2331,8 +2334,8 @@ lp . parseVariableDeclaration = function(kind, cFlags_For ) {
   var dec = [];
   var n = this.next ();
   
-  n. declarations = dec,
-  n. type= 'VariableDeclaration',
+  n. declarations = dec;
+  n. type= 'VariableDeclaration';
   n. kind= kind;   
   
   var e = this.parseVariableDeclarator(cFlags_For );
@@ -2846,21 +2849,13 @@ lp.parseFuncBody = function() {
      if ( this.tightness ) this.tightness++;  
      else {
        stmt = this.parseStatement();
-       if ( !stmt ) { this. scopeFlags = scopeFlags; this. iteD  = iteD ;  this.lbn = l; if ( a ) this. vnames = a. prev ; return this.end( n, this.expect ( '}' ) ); }
+       if ( !stmt ) { this. scopeFlags = scopeFlags; this. iteD  = iteD ;  this.lbn = l; return this.end( n, this.expect ( '}' ) ); }
 
        if ( stmt. type === 'ExpressionStatement' && ( stmt. expression . type === 'Literal') )
          switch ( ( stmt. expression . contents ) ) {
               case ("'use strict'" ) :
               case '"use strict"':
-                 var e;
-                 if ( a )
-                  for ( e in a )   {
-                    switch ( e ) {   case 'prev' :  case 'immediateErr' : continue ; case 'eval%': case 'arguments%' : this.err ( 'Not valid in strict mode is ' + e.substring(0,e.length - 1   )   )  ;  }
-            
-                    switch ( a[e] )   { case    2 : case 8 : continue ; }
-                    this.err ((  a[e]. value )   + ' already in the arglist           '   )   ;
-                  }
- 
+
                  this.tightness++;  
          } 
          stmts . push( stmt );
@@ -2949,9 +2944,8 @@ var compMain = function(main, n, from ) {
    }
 };
 
- exports.lube = {};
- exports.lube.parse = function(src) { return new Parser(src).parseProgram   () ; } 
- exports.lube.Parser=                            Parser;
+ exports.parse = function(src) { return new Parser(src).parseProgram   () ; } 
+ exports.Parser=                            Parser;
 
 
 
