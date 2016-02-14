@@ -1,4 +1,4 @@
-var tok = ( "a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l*a*a*a*a*a*a*a*a*a*a*a*a*a*l"    )     &&  require("fs" ).readFileSync("../../../../../N14_Muhammad(PBUH)/40/js/12").toString ();
+var tok = ( "l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;l.l.l - l.l.l ;"    )   ||         require("fs" ).readFileSync("../../../../../N14_Muhammad(PBUH)/40/js/12").toString ();
 
 
 
@@ -44,28 +44,36 @@ var IDBody = function (c) {
          (c <=  57 && c >=  48) || (IDC_[c >>  4 ] & (1 << (c &  15 )));
 };
 
-   {
+
+if ( 0 ) {
+   var funcName = 'nextraw'   ,   func     = E. func. prototype[ funcName ] ;
+   %OptimizeFunctionOnNextCall( func ) ;
+   E. parse(tok) ;
+   %OptimizeFunctionOnNextCall( func ) ;
+   if ( 0 || 12 ) {  
+     _L = new E. Parser ( "l" )  ;
+     _L .nextraw   () ;
+     while ( !false ) {
+        %OptimizeFunctionOnNextCall ( func ) ;
+        var _l = 0 ; 
+        while ( !false ) {
+           _L = new (E. Parser )( "." )     ;
+           _l ++ ;  
+           %OptimizeFunctionOnNextCall( func ) ;
+           _L .  next() ; _L .next() ; 
+           var _e = ( %GetOptimizationStatus  ( func )    )  ;
+           if ( _e == 2 )  break  ;
+           if ( _e != %GetOptimizationStatus  ( _L [ funcName ]  ) ) break ;  
+           if ( _l % 1200 == 0   ) console . log ( 12, _l )   ;
+        }
+
+        console.log( 120,  _l ) 
+     }
+   }
+}
 
 
 
-
-
-  _L   . next   ()  ;  
-
-
-
-
-
-%OptimizeFunctionOnNextCall(_L .next ) ;
-var _l = 0 ; 
-/* while ( !false ) {
-  _e =     _L . next ()  ; _l ++ ;  
-  if ( %GetOptimizationStatus  (          _L . next ) == 2 ) break  ;
-  if ( _l % 1200 == 0   ) console . log ( 12, _l )   ;
- }
-
-console.log( 120,  _l ) */ 
- }
 
 
 
