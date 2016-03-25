@@ -18,47 +18,11 @@ var Parser = function (src) {
   this.c0 = 0;
 };
 var _c = function (c) { return c.charCodeAt(0); };
-var _1 = _c ( '1' ),
-    _2 = _c ( '2' ),
-    _3 = _c ( '3' ) ,
-    _4 = _c ( '4'   ) ,
-    _5 = _c ( '5' ),
-    _6 = _c ( '6' ),
-    _7 = _c ( '7' ) ,
-    _8 = _c ( '8' ),
-    _9 = _c('9'),
-    _a = _c('a'),
-    _0 = _c('0'), _z = _c('z'),
-    _A = _c('A'), __ = _c('_'), _$ = _c('$'), _Z = _c('Z'),
-    _2 = _c('2'), _8 = _c('8'), _sq = _c('\''), _lf = _c('\n'),
-    _dq = _c('"'), _mul = _c('*'), _ws = _c(' '), _tab = _c('\t'),
-    _cret = _c('\r'), _parO = _c('('), _parC = _c(')'), _sbrO = _c('['),
-    _sbrC = _c(']'), _cubO = _c('{'), _cubC = _c('}'), _less = _c('<'),
-    _grea = _c('>'), _semi = _c(';'), _com = _c(','),
-    _dot = _c('.'), _and = _c('&'), _tick = _c('`'), _mod = _c(('%')),
-    _xor = _c('^'), _eq = _c(('=')), _exc = _c('!'), _comp = _c('~'),
-    _or = _c('|'), _ats = _c(' '), _min = _c(('-')), _ques = _c('?'),
-    _col = _c((':')), _div = _c('/'), _bs = _c(('\\')), _add = _c(('+')),
-    _F = _c('F'), _u = _c('u'), _O = _c('O'), _E = _c('E'),
-    _x = _c('x'), _X = _c('X'), _b = _c('b'), _B = _c('B'),
-    _f = _c('f'), _U = _c('U'), _o = _c('o'), _e = _c('e'),
-    _v = _c('v'),
-    _r = _c('r'),
-    _n = _c('n'),
-    _t = _c('t');
-var cfFor = 2, cfShortNotValid = 8 , cfNonAssigNotValid = 1, METHD = 1 << 4, cfY = 1 << 8 ;
-var cfExpectHeadBePrim = ((1) << ((5))), CFLAGS_PTRN_MEM = cfShortNotValid|cfNonAssigNotValid ; 
-var    funcFlag = 2 ,
-       breakFlag = (funcFlag << 1 ),
-    continueFlag = breakFlag << 1 ,
-       methdFlag = yieldFlag << 1 , 
-       yieldFlag = continueFlag << 1 ; 
-var ALL = 162;
-var nameInit = 2 ,
-    nameGet = nameInit << 2 ,
-    nameSet = nameGet << 1 ,
-    nameVar = ( 1 ),
-    nameMethd = nameInit << ( ( 4) ) ; 
+var _9 = _c('9'), _0 = _c('0'),
+    _mul = _c('*'), _ws = _c(' '),
+    _cubO = _c('{'), _cubC = _c('}'),
+    _and = _c('&'), _mod = _c(('%')),
+    _min = _c(('-'));
 var Num,num = Num = function (c) { return (c >= _0 && c <= _9)};
 var IDHead = function (c) {
   return [125, 59, 123, 45, 42, 38, 37].indexOf(c) === -1;
@@ -66,8 +30,6 @@ var IDHead = function (c) {
 var IDBody = function (c) {
   return false;
 };
-var space = function (c) { return c === _tab || c === _ws;};
-var num_hex = function (e) { return num(e) || (e   >= _a && e <= _f) || (e >= _A && e <= _F);};
 var lp = Parser.prototype;
 lp.next = function () {
   this.skipS();
