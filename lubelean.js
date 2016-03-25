@@ -15,7 +15,6 @@ var Parser = function (src) {
   this.v        = 12 ;  
 
   this.scopeFlags = 0; 
-  this.startStmt = false;
   this.foundStmt = false;
   this.foundExpr = false ; 
   this.canHaveNoAssig = false ;
@@ -136,12 +135,10 @@ var fromRunLenCodes = function (runLenArray, bitm ) {
   return (bitm);
 }
 
-var _h = function(n) { return n.toString(0x010 ) ; }
 var lp = Parser.prototype;
-var has   = Object.prototype.hasOwnProperty;
 
 lp.next = function () {
-  if ( this.skipS() ) return;
+  this.skipS();
   if (this.c >= this.src.length) {
       this. lttype =  'eof' ;
       this.ltcontents=  '<<EOF>>';
@@ -149,8 +146,6 @@ lp.next = function () {
   }
   var c = this.c,
       l = this.src,
-      e = l.length,
-      r = 0,
       peek,
       start =  c;
  
@@ -160,55 +155,31 @@ lp.next = function () {
   else if (Num(peek))this.readNumberLiteral(peek);
   else { 
     switch (peek) {
-      case _dq: case _sq: return this.readStrLiteral(peek);
       case _min:
-      case _add: this.opAddMin(peek) ; break;
-      case _dot: this.readDot () ; break ;
-      case _eq:  this.opEq () ;   break ; 
-      case _less: this.opLess() ;   break ;
-      case _grea: this.opGrea() ;   break ;
-      case _mul: if ( l.charCodeAt(c+1) == peek) c++ ; 
+         this.opAddMin(peek);
+         break;
+      case _mul:
+         if ( l.charCodeAt(c+1) == peek) c++ ; 
       case _mod: 
          c++ ;
-         if ( l.charCodeAt(c) == _eq) { c ++ ; this.lttype = '=' ;  }
-         else {  this.  prec = 0xAD; this.  lttype = 'op'; } 
+         this.prec = 0xAD;
+         this.lttype = 'op';
          this.ltcontents = l.slice(this.c,c)  ; 
          this.c=c;
          break ;
-                                    
       case _and:
-          c++ ;
-          switch ( l.charCodeAt ( c ) ) {
-            case _eq : c ++ ; this.lttype = '='  ; this.ltcontents = '&=' ;  break ;
-            case _and : c ++; this.ltcontents = '&&' ; this.lttype = 'op' ;  this. prec = 0x0B ;  break ;
-            default : this.  lttype = 'op' ; this. prec =  0x01D;  this.ltcontents = '&' ;  break ;
-         }
+         c++ ;
+         this.lttype = 'op';
+         this. prec =  0x01D;
+         this.ltcontents = '&';
          this.c=c;
          break ;
-
       default:
-        var mustBeAnID = 0 ;
         this.c=c;
-
         this.c0  = c   ;
         this.col0= this.col;
         this.li0 = this. li ;
-  
-        if (_bs == peek) {
-          mustBeAnID = 1 ;
-          peek = l.charCodeAt(++ this. c);
-          peek = this.peekUSeq();
-        }
-        if (peek >= 0x0D800 && peek <= 0x0DBFF ) {
-            if ( !mustBeAnID ) mustBeAnID = 2 ;
-             this . c ++ ; e = peek ; r = this.peekTheSecondByte() ; 
-            peek = ((peek - 0x0D800)<<10) + ( r-0x0DC00) + (0x010000) ;
-        }
-        if (mustBeAnID) {
-            this.readAnIdentifierToken( mustBeAnID == (2) ? (String.fromCharCode ( peek, r ) ) : String.fromCharCode ( peek) ); 
-        }
- 
-        else { this.readMisc();}
+        this.readMisc();
     }
   }
 
@@ -219,8 +190,6 @@ lp . opAddMin = function(peek) {
         var c = this.c, assig = false, l = this.src ;
         c++ ;
         var r = l.charCodeAt ( c ) ;
-        if ( r == _eq ) { c ++ ; assig = !false;   }
-        else if ( r == peek ){ c ++ ;  }
         this.ltcontents = this.src.slice(this.c,c)  ;
         this.lttype = assig ? '=' : this.ltcontents ;
         this.c=c;
@@ -229,8 +198,7 @@ lp . opAddMin = function(peek) {
 
  
 lp.skipS = function() {
-     var noNewLine = !false   ,
-         c = this.c,
+     var c = this.c,
          l = this.src,
          e = l.length,
          start = c;
@@ -240,26 +208,21 @@ lp.skipS = function() {
          case _ws :
              while ( ++c < e &&  l.charCodeAt (  c ) == _ws );
              continue ;
-         case _cret : if ( _lf == l.charCodeAt ( c + 1 ) ) c ++ ; 
-         case _tab: c++ ; continue ;
-
          default :
             this.col += (c-start ) ;
             this.c=c;
-            this.hasL = !noNewLine ;
+            this.hasL = false;
             return ;
        }
      } 
 
   this.col += (c-start ) ;
   this.c = c ;
-  this.hasL = ! noNewLine ; 
+  this.hasL = false; 
 };
 
 
 lp.readAnIdentifierToken = function ( v ) {
-   
-   
    if ( !v ) {
      this.li0 = this.li;
      this.col0 = this.col;
@@ -276,10 +239,6 @@ lp.readAnIdentifierToken = function ( v ) {
     while ( ++c  < e ) {
       if ( IDBody( peek = l.charCodeAt(c) ) ) continue;
       break ;
-    }
-    if ( v ) {    
-       this.idcontents = this.ltcontents =  v = l.slice(this.c,c);
-       this. ltval =  v; 
     }
     this.c = c;
     this.lttype= 'Identifier'   ;
@@ -364,7 +323,6 @@ lp.blck = function () { // blck ([]stmt)
 };
 
 lp.parseStatement = function ( nullNo       ) {
-  this.startStmt = !false;
   var head, l, e ;
 
   switch (this.lttype) {
@@ -386,24 +344,6 @@ lp.parseStatement = function ( nullNo       ) {
   if (this.foundStmt) { this.foundStmt = false; return head; } 
 
   head = this .parseNonSeqExpr(head, 0, 0 ) ;
-  if (head .type == 'Identifier' && this.lttype == ':') {
-     this.next() ;
-     l = head.value  ;    
-     l += '%';
-     this.lbn[l] = this. iteD; 
-     e  = this.parseStatement();
-     this.lbn[l]                = -1    ;
-     head  = {  
-        type  : 'LabeledStatement',
-        label : head ,
-        start : head.start ,
-          end : e.end ,
-          loc : { start : head.loc.start, end : e.loc.end },
-        body  : e
-     };
-     return head  ;
-  }
-
   e  = this.semiI() || head . end  ;
   head = { 
     type : 'ExpressionStatement', 
@@ -464,28 +404,13 @@ lp.parseNonSeqExpr = function (head, breakIfLessThanThis , cFlags_For ) {
 };
 
 lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
-  var head;
-  var _c ; 
-  var startc, startLoc ;
-  var e   ;
-
   if ( this . lttype == 'Identifier' ) {
-      head = this.id () ; 
-      if ( this.foundStmt ) { return head ; } 
+      return this.id () ;
   }
-
-  else {
-      if ( this. startStmt  ) this.startStmt = false ;
-      return; 
-  }
-
-  _c = core( head ) ;
-  return head ;
 } ;
 
 
 lp.id = function () {
-   if ( this.startStmt ) this.startStmt = false ;
    var e = {  type   : 'Identifier' ,
              value   : this.ltval ,
             start    : this.c0,
