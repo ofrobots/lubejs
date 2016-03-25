@@ -55,34 +55,21 @@ lp.next = function () {
   } else {
     switch (peek) {
       case _min:
-         c++ ;
-         this.ltcontents = this.src.slice(this.c,c)  ;
-         this.lttype = this.ltcontents ;
-         this.c=c;
-         this.prec = 0xA7;
-         break;
       case _mul:
-         if ( l.charCodeAt(c+1) == peek) c++ ; 
       case _mod: 
+      case _and:
          c++ ;
          this.prec = 0xAD;
          this.lttype = 'op';
          this.ltcontents = l.slice(this.c,c)  ; 
          this.c=c;
          break ;
-      case _and:
-         c++ ;
-         this.lttype = 'op';
-         this. prec =  0x01D;
-         this.ltcontents = '&';
-         this.c=c;
-         break ;
       default:
-        this.c=c;
-        this.c0  = c   ;
+        this.c0 = c;
         this.col0= this.col;
-        this.li0 = this. li ;
-        this.readMisc();
+        this.li0 = this.li;
+        this.c=c;
+        this.ltcontents = this.lttype = this.src.charAt(this.c++);
     }
   }
   this.col += ( this.c - start );
@@ -106,7 +93,6 @@ lp.skipS = function() {
   this.col += (c-start ) ;
   this.c = c ;
 };
-lp.readMisc = function () {  this.ltcontents = this.lttype = this.  src.   charAt (   this.c ++  )    ; };
 lp.semiLoc = function () {
   switch (this.lttype) {
     case ';': var n = this.loc() ;   this.next () ;  return n  ;
