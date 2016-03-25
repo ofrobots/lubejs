@@ -247,10 +247,10 @@ while (tok.length - 400000 <= -400) {
   tok += ";{a-b*c&d%e*a-b*c&d%e }";
 }
 
-console.log( 'length of the input:' , tok.length )  ;
+print( 'length of the input:' , tok.length )  ;
 
 var run = 10; while ( run    ) {
-   console.log(run ) ;
+   print(run ) ;
    new Parser((tok)).parseProgram() ;
    run -- ; 
 }
