@@ -1,7 +1,6 @@
 'use strict'
 
 var Parser = function (src) {
-
   this.peek = 0;
   this.n = 0;
   this.hasL = false;
@@ -13,7 +12,6 @@ var Parser = function (src) {
   this.li = 1;
   this.isScript = !false;
   this.v        = 12 ;  
-
   this.scopeFlags = 0; 
   this.foundStmt = false;
   this.foundExpr = false ; 
@@ -23,27 +21,21 @@ var Parser = function (src) {
 //  this. names = {}
   this. iteD= 0;
   this. i   =       null ; 
-
   this. ltval = null;
   this. lttype= "";
   this. ltcontents = "" ;
   this.prec = 0 ;
   this. idcontents = "" ; 
-
   this.li0 = 0;
   this.col0 = 0;
   this.c0 = 0;
-
   this. prev     = []  ;
   this. argList  = null;
   this. argListIsActive= false ;
-   
   this.funcBecause = null ;
   this.convErr = "" ;
 };
-
 var _c = function (c) { return c.charCodeAt(0); };
-
 var _1 = _c ( '1' ),
     _2 = _c ( '2' ),
     _3 = _c ( '3' ) ,
@@ -72,38 +64,29 @@ var _1 = _c ( '1' ),
     _r = _c('r'),
     _n = _c('n'),
     _t = _c('t');
-
 var cfFor = 2, cfShortNotValid = 8 , cfNonAssigNotValid = 1, METHD = 1 << 4, cfY = 1 << 8 ;
 var cfExpectHeadBePrim = ((1) << ((5))), CFLAGS_PTRN_MEM = cfShortNotValid|cfNonAssigNotValid ; 
-
 var    funcFlag = 2 ,
        breakFlag = (funcFlag << 1 ),
     continueFlag = breakFlag << 1 ,
        methdFlag = yieldFlag << 1 , 
        yieldFlag = continueFlag << 1 ; 
-
 var ALL = 162;
-
 var nameInit = 2 ,
     nameGet = nameInit << 2 ,
     nameSet = nameGet << 1 ,
     nameVar = ( 1 ),
     nameMethd = nameInit << ( ( 4) ) ; 
-
 var Num,num = Num = function (c) { return (c >= _0 && c <= _9)};
 var IDHead = function (c) {
   return [125, 59, 123, 45, 42, 38, 37].indexOf(c) === -1;
 };
-
 var IDBody = function (c) {
   return false;
 };
-
 var space = function (c) { return c === _tab || c === _ws;};
 var num_hex = function (e) { return num(e) || (e   >= _a && e <= _f) || (e >= _A && e <= _F);};
-
 var lp = Parser.prototype;
-
 lp.next = function () {
   this.skipS();
   if (this.c >= this.src.length) {
@@ -115,7 +98,6 @@ lp.next = function () {
       l = this.src,
       peek,
       start =  c;
- 
   this.idcontents = "" ;
   peek  = this.src.charCodeAt(start);
   if ( IDHead(peek) )this.readAnIdentifierToken('');
@@ -149,10 +131,8 @@ lp.next = function () {
         this.readMisc();
     }
   }
-
   this.col += ( this.c - start );
 };
-
 lp . opAddMin = function(peek) {
         var c = this.c, assig = false, l = this.src ;
         c++ ;
@@ -162,14 +142,11 @@ lp . opAddMin = function(peek) {
         this.c=c;
         this.prec= 0xA7 ; 
 }
-
- 
 lp.skipS = function() {
      var c = this.c,
          l = this.src,
          e = l.length,
          start = c;
-
      while ( c < e ) {
        switch ( l.charCodeAt ( c ) ) {
          case _ws :
@@ -182,27 +159,22 @@ lp.skipS = function() {
             return ;
        }
      } 
-
   this.col += (c-start ) ;
   this.c = c ;
   this.hasL = false; 
 };
-
-
 lp.readAnIdentifierToken = function ( v ) {
    if ( !v ) {
      this.li0 = this.li;
      this.col0 = this.col;
      this.c0 = this.c;
     }
-
     var c = this.c,
         l = this.src,
         e = (l.length),
         peek ,
         r ,
         n = c + 1 ; // the head is already supplied in v
-
     while ( ++c  < e ) {
       if ( IDBody( peek = l.charCodeAt(c) ) ) continue;
       break ;
@@ -210,8 +182,6 @@ lp.readAnIdentifierToken = function ( v ) {
     this.c = c;
     this.lttype= 'Identifier'   ;
 };
-
-
 lp.readMisc = function () {  this.ltcontents = this.lttype = this.  src.   charAt (   this.c ++  )    ; };
 lp.semiLoc = function () {
   switch (this.lttype) {
@@ -238,7 +208,6 @@ lp . numstr    =   function () {
   this.next   () ;
   return n   ;
 };
-
 lp.lit = function(_v) { 
   var n = {
     type : 'Literal',
@@ -252,7 +221,6 @@ lp.lit = function(_v) {
   this.next   () ;
   return n   ;
 };      
-
 lp.tok = function() {
  return {
       type : this.lttype,
@@ -263,13 +231,11 @@ lp.tok = function() {
                end : this.loc   ()   }
  };   
 }
- 
 lp.parseProgram = function () {
   this.next() ;
   var prog = this.blck() ;
   var e0   = null,             e   =     null  ;
   if ( prog.length ) { e0 = prog[ 0 ]; e       =   prog[ prog . length  -1    ]  ; }
-
   prog = ({
       type: 'Program',
       body: prog,
@@ -282,34 +248,27 @@ lp.parseProgram = function () {
    this.next()
    return prog ;
 };
-
 lp.blck = function () { // blck ([]stmt)
   var stmts = [], stmt;
   while (stmt = this.parseStatement( false )) stmts.push(stmt);
   return (stmts);
 };
-
 lp.parseStatement = function ( nullNo       ) {
   var head, l, e ;
-
   switch (this.lttype) {
     case '{': return this.parseBlckStatement();
     case ';':
        l  =  { type: 'EmptyStatement', start : this.c - 1,
                loc : { start : this.locOn(1) , end : this.loc() }, end : this.c };
-
        this.next   () ;
        return l;
-             
     case 'eof': return;
   }
-
   var head = this.parseExprHead (0);
   if ( !head ) {
     return ;
   }
   if (this.foundStmt) { this.foundStmt = false; return head; } 
-
   head = this .parseNonSeqExpr(head, 0, 0 ) ;
   e  = this.semiI() || head . end  ;
   head = { 
@@ -319,10 +278,8 @@ lp.parseStatement = function ( nullNo       ) {
     end : e ,
     loc : { start : head.loc.start, end : this.semiLoc() || head .loc.end }
   };
-
   return head  ;
 };
-
 lp.parseBlckStatement = function () {
   var startc = this.c-1, startLoc = this.locOn(1)  ;
   this.next () ;
@@ -337,19 +294,15 @@ lp.parseBlckStatement = function () {
   this.next();
   return n;
 };
-
 lp.parseNonSeqExpr = function (head, breakIfLessThanThis , cFlags_For ) {
   var n ;
   var _b = null  , _e = null  ; 
-
   var hasPrefixOrPostfix = false, prec, o, precOrAssocDistance;
-
   while (!false) {
     switch (this.lttype) {
       case '-' :
       case 'op' :
          break ;
-
      default:
         return head;
     }
@@ -369,14 +322,11 @@ lp.parseNonSeqExpr = function (head, breakIfLessThanThis , cFlags_For ) {
    }  ;
  }
 };
-
 lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
   if ( this . lttype == 'Identifier' ) {
       return this.id () ;
   }
 } ;
-
-
 lp.id = function () {
    var e = {  type   : 'Identifier' ,
              value   : this.ltval ,
@@ -390,7 +340,6 @@ lp.id = function () {
    this.next   () ;
    return e ; 
 };
-
 var core = function(n ) { return ( ( n . type == 'paren' ? n.expr : n )) ; } 
 
 // this is the one that triggers a segmentation fault (code 139),  and occasionally an 'invalid instruction' (code 132)
