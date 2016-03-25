@@ -189,33 +189,7 @@ lp.nextraw = function () {
          this.ltcontents = l.slice(this.c,c)  ; 
          this.c=c;
          break ;
-
-      case _exc:
-         c++ ;
-         if ( l.charCodeAt ( c ) == _eq ) {
-           this. prec = 0x5D ;
-           this. lttype = 'op';  
-           c ++ ;
-           if ( l.charCodeAt (c) == _eq ) { this.ltcontents = '!==';  c ++ ; }
-           else this.ltcontents = '!=' ;
-         }
-         else { this.ltcontents = this.lttype = '!' ; }
-         this.c=c;
-         break ;
                                     
-      case _comp:
-            c++ ; this.c=c; this.lttype = this.ltcontents = '~' ; break ; 
-
-      case _or:
-         c++ ; 
-         switch ( l.charCodeAt ( c ) ) {
-            case _eq : c ++ ; this. lttype = '=' ; this.ltcontents = '|=' ; break ;
-            case _or : c ++ ; this. ltcontents = '||' ; this. lttype = 'op'; this. prec = ( 0x09 ) ; break ; 
-            default : this. lttype = 'op'; this.  prec = 0x0D ; this. ltcontents = '|'; break ;
-         }
-         this.c=c;
-         break ;
-
       case _and:
           c++ ;
           switch ( l.charCodeAt ( c ) ) {
@@ -225,14 +199,6 @@ lp.nextraw = function () {
          }
          this.c=c;
          break ;
-
-      case _xor:
-        c++;
-        if ( l.charCodeAt(c ) == _eq ) {  c++ ;   this. lttype = '='  ;  }
-        else  { this.  prec = 0x01B ;  this.lttype = 'op' ; } 
-        this.ltcontents = l.slice(this.c,c)  ;
-        this.c=c  ;
-        break; 
 
       default:
         var mustBeAnID = 0 ;
@@ -292,65 +258,7 @@ lp.skipS = function() {
              while ( ++c < e &&  l.charCodeAt (  c ) == _ws );
              continue ;
          case _cret : if ( _lf == l.charCodeAt ( c + 1 ) ) c ++ ; 
-         case _lf :
-            if ( noNewLine ) noNewLine = false ; 
-            start = ++ c ;
-            this.li ++ ; 
-            this.col = ( 0)
-            continue ;
-            
          case _tab: c++ ; continue ;
-         case _div:
-             switch ( l.charCodeAt ( c + ( 1) ) ) {
-                 case _div:
-                     c ++ ;
-                     this.c=c;
-                     this.readCmntl () ;
-                     if ( noNewLine ) noNewLine = false ;
-                     start = c = this.c ;
-                     continue ;
-
-                 case _eq:
-                   c ++ ;
-                   this. hasL = ! noNewLine ;
-                   this.col += (c-start ) ;
-                   this.c=c;
-                   this  .   ltcontents =  '/' ;
-                   this. lttype    =    '='    ;
-                   return !false; 
-
-                 case _mul:
-                   c +=  2 ;
-                   this.col += (c-start ) ;
-                   this.c = c ;
-                   noNewLine = this. readCmntm () && noNewLine ;
-                   start = c = this.c ;
-                   continue ;
-
-                 default:
-                     c++ ; 
-                     this.hasL = ! noNewLine ;
-                     this.col += (c-start ) ;
-                     this.c=c ; 
-                     this.prec  = 0xAD ; 
-                     this.lttype =  '/';
-                     this.ltcontents = '/' ;
-                     return !false; 
-             }
-
-         case 0x0020:case 0x00A0:case 0x1680:case 0x2000:
-         case 0x2001:case 0x2002:case 0x2003:case 0x2004:
-         case 0x2005:case 0x2006:case 0x2007:case 0x2008:
-         case 0x2009:case 0x200A:case 0x202F:case 0x205F:
-         case 0x3000: c ++ ; continue ;
-
-         case 0x2028:
-         case 0x2029: 
-            if ( noNewLine ) noNewLine = false ;
-            start = ++c ;
-            this.col = 0 ;
-            this.li ++ ;
-            continue; 
 
          default :
             this.col += (c-start ) ;
@@ -384,51 +292,9 @@ lp.readAnIdentifierToken = function ( v ) {
 
     while ( ++c  < e ) {
       if ( IDBody( peek = l.charCodeAt(c) ) ) continue;
-      if (peek == _bs) {
-         if ( !v ) v = l.charAt (n-1) ;
-         if ( n < c ) v += l.slice(n,c) ;
-         if (_u != l.charCodeAt(this.c = ++c)  )
-            this.err('the \\ must have "u" after it ;instead, it has ' + this.src[this.c]);
-
-         peek = this. peekUSeq() ;
-         if (peek >= 0x0D800 && peek <= 0x0DBFF ) {
-           this.c++ ;
-           r = this.peekTheSecondByte(); 
-           if ( !IDBody(((peek-0x0D800)<<10) + (r-0x0DC00) + 0x010000) )
-                this.err('a \\u sequence in identifier body position must belong to IDContinue group, but it (' + _h (peek) + ') does not'); 
-        
-           v += String.fromCharCode( peek, r ); 
-         }
-         else {
-            if ( !IDBody(peek) )
-               this.err('a \\u sequence in identifier body position must belong to IDContinue group, but it (' + _h (peek) + ') does not') ; 
-            
-            v += String.fromCharCode ( peek ) ;
-         }
-         c = this.c; n = c + 1;
-         continue;
-       }
-       if (peek >= 0x0D800 && peek <= 0x0DBFF ) {
-          if ( !v ) { v = l. charAt ( n -1 ) ; }
-          if ( n < c ) v += l.slice(n,c) ; 
-          this.c = ++c ;
-          r = this.peekTheSecondByte() ;
-          if (!IDBody(((peek-0x0D800 ) << 10) + (r-0x0DC00) + 0x010000))
-            this.err( 'a \\u sequence in identifier body position must belong to IDContinue group, but it (' + _h (peek) + ') does not' );
-
-          v += String.fromCharCode(peek, r ) ; 
-          n = c+ ( 1) ;
-          c = this.c ;
-          continue;
-       }
-       break ;
+      break ;
     }
     if ( v ) {    
-       if ( n < c ) v += l . slice(n,c) ;
-       this.ltcontents = l.slice( this.c0 , c  )  ; 
-       this.ltval = this.idcontents = v  ;
-    }
-    else    {
        this.idcontents = this.ltcontents =  v = l.slice(this.c,c);
        this. ltval =  v; 
     }
@@ -645,90 +511,10 @@ lp.parseNonSeqExpr = function (head, breakIfLessThanThis , cFlags_For ) {
   EXPR:
   while (!false) {
     switch (this.lttype) {
-      case '++':
-      case '--':
-        if (hasPrefixOrPostfix) this.err(' both ')
-        if (this.hasL) return head;
-        head =  {
-             type  : 'UpdateExpression' ,
-          argument : core(head ) ,
-          start    : (head . start )   ,
-         operator  : this.ltcontents ,
-            prefix : false,
-               end : this.c ,  
-               loc : { start : head.loc.start ,
-                         end : { line  : this.li  , column : this.col  }   }  ,
-        };    
-        this.next() ; 
-        hasPrefixOrPostfix = !false;
-        continue;
-
-      case '/' :
-      case '+' :
       case '-' :
       case 'op' :
          prec = this . prec;
          break ;
-
-      case '?':
-         if ( breakIfLessThanThis) return head ;
-         this.next ();
-         o     =  core(this.parseExpr(null,0)) ;
-         this.expect(':');
-         n     =      this.parseNonSeqExpr( this.parseExprHeadOrYield( 0  ), 0, cFlags_For )   ;
-         return  { 
-               type   : 'ConditionalExpression',
-               test   : core(head) ,
-              start   : head.start ,
-                end   : n.end ,
-              loc     : { start : head.loc.start , end : n.loc.end } ,
-          consequent  : o,
-          alternate   : core(n)
-         };
-       
-       case '=' : 
-          if( breakIfLessThanThis != 0 ) this.err( head.type + ' is not a valid assignable' ) ;
-          var convErr ;
-          if (  this.ltcontents === (   '=>' ) ) {
-             n  = core(head) ;
-             convErr = this.convList(n);
-             if ( convErr ) this.err ( convErr.type + ' is not a param for a function ; reason ' + this.convErr ) ;
-             12 ; return this. prseArrowFunctionExpression ( head   )  ;
-
-  
-          }
-
-          convErr = this.convAssig(core(head)) ;
-          if (convErr) { var m = this.convErr ; this.convErr = null; this.err(m , convErr ) ; }
-          o  = this.ltcontents ; 
-          this.next ();
-          n = this.parseNonSeqExpr( this. parseExprHeadOrYield(cFlags_For), 0,  cFlags_For )   ;
-          return {
-                type: 'AssignmentExpression',
-                operator : o  ,
-                   start : head  . start ,
-                     end : n. end , 
-                  pDepth : 0   ,
-                   left  : core(head)  , 
-                   right : core(n) ,
-                   loc   : { start : head.loc.start, end : n.loc.end   }
-          };
-
-      case 'Identifier' :
-        switch ( this . idcontents ) {
-            case 'in':
-            case 'of':
-            if (cFlags_For & cfFor ) {
-              if (breakIfLessThanThis != 0 || hasPrefixOrPostfix) this.err( head.type + ' is not a valid assignable' );
-              return head;
-            }
-            case 'instanceof': 
-               prec = 0x9B;
-               break;
-
-            default : return head
-        }
-        break;
 
      default:
         return head;
@@ -757,144 +543,7 @@ lp . parseExprHeadOrYield = function ( cFlags_For_Sh_Non ) {
 };
 
 lp. parseStatementOrID = function ( cFlags_For_Sh_Non_Ex ) {
-  var c = this .idcontents , parse = null ;
-
-  if (c.length >    12 ) return this.id();
-  switch (c.length) {
-    case 1: return (this.id());
-    case 2:
-      switch (c) {
-        case 'do': parse = lp.parseDoWhileStatement; break;
-        case 'if': parse = lp.parseIfStatement; break;
-        case 'in': break ;
-        default: return this.id();
-      }
-      break ;
-
-    case 3:
-      switch (c) {
-        case 'new': return this.parseNewHead();
-        case 'for': parse = lp. parseFor ; break;
-        case 'try': parse = lp.parseTryStatement; break;
-        case 'let':                                                      return      this. parse_let   () ;
-
-        case 'var': return this. parseVariableDeclaration(0,0,null ) ;
-        case 'int': if ( this.v <= 5 ) this.resv();
-        default: return this.id();
-      }
-
-      break ;
-
-   case 4:
-      switch (c) {
-        case 'null' : if ( this.startStmt ) this.startStmt = false ; return this. lit (null) ; 
-        case 'void': this . foundExpr = !false ; if ( this.startStmt ) this.startStmt = false ; return;
-        case 'this': return this. parse_this   () ;
-        case 'true': if ( this.startStmt ) this.startStmt = false ; return this.lit (!false) ; 
-        case 'case':
-        case 'else':
-          break ;
-       
-        case 'with': parse = lp. parseWithStatement ; break;
-        case 'enum': 
-        case 'byte':
-        case 'char':
-        case 'goto':
-        case 'long': if ( this. v <= 5 ) this. resv   () ;  
- 
-        default: return this.id();
-      }
-      break ;
-
-    case 5:
-      switch (c) {
-        case 'super': return this.                            parseSuper      ()  ; 
-        case 'break': parse = (lp.parseBreakStatement); break ;
-        case 'catch': return;
-        case 'class': return this. parseClass   () ; 
-        case 'const': return this. parseVariableDeclaration ( c ) ;
-        case 'throw': parse = (lp.parseThrowStatement); break;
-        case 'while': parse = lp.parseWhileStatement; break;
-        case 'yield': this. err ( 'the yield can\'t come after any op '   )    ;
-        case 'false':  if ( this.startStmt ) this.startStmt = false ;return this.lit ( false ) ; 
-        case 'final':
-        case 'float':
-        case 'short':
-            if ( this. v <= 5 ) this. resv   () ; 
- 
-        case 'await':
-        default: return this.id();
-      }
-      break ;
-
-    case 6:
-      switch (c) {
-        case 'static': if ( this. tight || this. v <= 5 ) this. resv   () ;
-        case 'delete': 
-        case 'typeof': this.foundExpr = !false ; if ( this.startStmt ) this.startStmt = false ; return 
-        case 'export': (parse) = lp.stmtPrse_export; break;
-        case 'import': parse = lp.stmtPrse_import; break;
-        case 'return': parse = lp.parseReturnStatement; break;
-        case 'switch': parse = lp.parseSwitchStatement; break;
-        case 'double':
-        case 'native':
-        case 'throws': if ( this. v <= 5 ) this. resv   () ; 
-        default: return this.id();
-      }
-      break ;
-
-    case 7:
-      switch (c) {
-        case 'default': 
-        case 'extends':
-        case 'finally': break ;
-        case 'package':
-        case 'private': if ( this. tight  ) this. resv   () ; 
-        case 'boolean': if ( this. v <= 5 ) this. resv   () ;
-        default: return this.id();
-      }
-      break ;
-
-    case 8:
-      switch (c) {
-        case 'function': return this. parseFunc(cFlags_For_Sh_Non_Ex&cfFor )   ; 
-        case 'debugger': return this. prseDbg                              ()  ;
-        case 'continue': parse = lp.parseContinueStatement; break;
-        case 'abstract':
-        case 'volatile': if ( this. v <= 5 ) this. resv   () ;
-        default: return this.id();
-      }
-      break ;
-
-      case 9:
-          switch (c ) {
-            case 'interface': 
-            case 'protected': if (this. tight ) this. resv   () ;
-            case 'transient': if ( this. v <= 5 ) this. resv   () ; 
-          }
-          return this.id   () ;
-
-    case 10:
-      switch ( c ) {
-        case 'instanceof': break ;
-        case 'implements': if ( this. v <= 5 || this. resv   ()  ) this. resv   () ; 
-        
-        default :    
-          return this.id(); 
-      }
-      break ;
-
-     case 12:
-        if ( this.v <= 5 &&  c  ===  'synchronized' ) this. resv   () ;
-
-    default: return this.id();
-  }
-
-  if (!this.startStmt) this.err('an identifier was expected but found ' + c ) ;
-  this.startStmt = false ; 
-  c = parse && parse.apply(this);
-  this.foundStmt = !false ; 
-  return c ;
+  return this.id();
 };
 
 lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
@@ -906,147 +555,14 @@ lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
   if ( this . lttype == 'Identifier' ) {
       head = this.parseStatementOrID ( cFlags_For_Sh_Non_Ex  ) ; 
       if ( this.foundStmt ) { return head ; } 
-      if ( this.foundExpr ) { 
-        if ( cFlags_For_Sh_Non_Ex & cfExpectHeadBePrim) { this.err('Unexpected unary'); }
-        if ( this.startStmt ) this.startStmt = false ;
-        startc = this.c0;
-        startLoc = this.locBegin   () ;
-        this.foundExpr = false ;
-        e   = this.idcontents  ;
-        this.next    () ;
-        head  =  this.parseNonSeqExpr(this.parseExprHead( cFlags_For_Sh_Non_Ex  ),0xAE,cFlags_For_Sh_Non_Ex & cfFor  )  ;
-        return {
-             type : 'UnaryExpression' , 
-             operator : e ,
-             start :  startc ,
-               end :  head.end  ,
-             loc   :  { start : startLoc , end  :  head.loc.end }   ,
-            argument : core(head)     
-        };
-     }
   }
 
   else {
       if ( this. startStmt  ) this.startStmt = false ;
-      switch (this.lttype)  {
-            case '[' : head = this. parseArrayExpression( cFlags_For_Sh_Non_Ex &    (CFLAGS_PTRN_MEM ) ) ; if ( this. propThatMustBeInAnAssig ) return head ; break ;
-            case '(' : head = this. parseParen() ; if ( this . funcBecause ) return head ; break ;
-            case '{' : head = this. parseObjectExpression( cFlags_For_Sh_Non_Ex & (CFLAGS_PTRN_MEM) ) ; if ( this. propThatMustBeInAnAssig ) return head ; break ;
-            case '/' : head = this. parseRegExpLiteral () ; break ;
-            case '`' : head = this. parseTemplateLiteral () ; break ;
-            case 'Literal': head = this.numstr (); break ;
-
-            case '++': 
-            case '--':
-               if (cFlags_For_Sh_Non_Ex & cfExpectHeadBePrim ) this.err('Unexpected unary');
-               startc = this.c   -   2  ;
-               startLoc = this.locOn(2 );
-               e  = this. ltcontents ;
-               this.next   () ; 
-               head  = this. parseExprHead (cfExpectHeadBePrim ) ;
-               _c =  ( core(head)        ) ;
-               if ( ! this  . simpAssig ( _c   )  ) this. err ( head. type + ' is not an assig ' )  ;
-               return  {
-                    type : 'UpdateExpression',
-                    operator : e  ,
-                    start : startc,
-                    end : head.end   ,
-                    loc : { start : startLoc, end : head.loc.end } , 
-                    prefix: !false,
-                    argument: core(head   )
-               };
-
-            case '~':
-            case '!':
-            case '-':
-            case '+':
-               if (cFlags_For_Sh_Non_Ex & cfExpectHeadBePrim) this.err('Unexpected unary');
-               startc = this.c - 1  ;
-               startLoc = this.locOn(1   )   ;
-               e  =  this.ltcontents ;
-
-               this.next   () ;
-               head  = ( this.parseNonSeqExpr(this.parseExprHead(0),0xAE,cFlags_For_Sh_Non_Ex & cfFor  )) ;
-               return {
-                    type: 'UnaryExpression' ,
-                    operator: e ,
-                    start :   startc ,
-                    end : head.end  ,
-                    loc : { start : startLoc, end : head.loc.end  }  ,
-                    prefix: !false,
-                    argument : core(head )
-               };
-
-            default:
-               if ( (cFlags_For_Sh_Non_Ex) & cfExpectHeadBePrim ) this.err(this. peek + ' is not a vaild start for an expr' ) ; return ; 
-        }
+      return; 
   }
 
-   _c = core( head ) ;
-   while ( !false ) {
-        switch (this.lttype ) {
-
-          case '.':
-               this.next   () ;
-               e   = this.memID()  || this. err ( 'Unexpected ' + this. lttype )   ;
-               head =   {  type: 'MemberExpression',
-                       property:  e,
-                         start : head.start,
-                           end : e.end,
-                           loc : { start : head.loc.start , end : e.loc.end },
-                        object : _c ,
-                       computed: false,
-                   };
-               _c =  head ;
-               continue;
-
-         case '[':
-            this.next   () ;
-            e   = this. parseExpr(null,0 ) ;
-            head =  { type: 'MemberExpression' ,
-                  property: core (e),
-                    start : head.start,
-                      end : this.c,
-                    loc : { start : head.loc.start, end : this.loc()  } , 
-                 object : _c ,
-                 computed: !false
-            }; 
-            _c  = head ;
-            this.expect(']') ; 
-            continue;
-
-         case '(':
-              this.next    () ;
-              e  = this. parseArgList() ; 
-              head =  {
-                   type: 'CallExpression',
-                   callee: _c ,
-                   start : head.start,
-                     end : this.c  , 
-               arguments : e,
-                   loc   : { start : head.loc.start, end : this.loc   () }
-             };
-             this.expect(')'   )  ;
-             _c = head  ;
-             continue;
-
-          case '`' :
-            
-             head = n = start ( {
-                  type : 'quasi',
-                  quasi : this . parseTemplateLiteral () ,
-                  loc : {} ,
-                  tag : n
-             } , head ) ; 
-
-             end (head , head.quasi ); 
-             continue ; 
-
-          default: return head ;
-        }
-
-      } 
-
+  _c = core( head ) ;
   return head ;
 } ;
 
