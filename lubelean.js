@@ -40,15 +40,26 @@ lp.next = function () {
   }
   var c = this.c,
       l = this.src,
-      peek,
+      peek  = this.src.charCodeAt(this.c),
       start =  c;
-  peek  = this.src.charCodeAt(start);
-  if ( IDHead(peek) )this.readAnIdentifierToken('');
-  else if (Num(peek))this.readNumberLiteral(peek);
-  else { 
+  if ( IDHead(peek) ) {
+    this.li0 = this.li;
+    this.col0 = this.col;
+    this.c0 = this.c;
+    while ( ++c  < l.length ) {
+      if ( IDBody( peek = l.charCodeAt(c) ) ) continue;
+      break ;
+    }
+    this.c = c;
+    this.lttype= 'Identifier';
+  } else {
     switch (peek) {
       case _min:
-         this.opAddMin(peek);
+         c++ ;
+         this.ltcontents = this.src.slice(this.c,c)  ;
+         this.lttype = this.ltcontents ;
+         this.c=c;
+         this.prec = 0xA7;
          break;
       case _mul:
          if ( l.charCodeAt(c+1) == peek) c++ ; 
@@ -76,15 +87,6 @@ lp.next = function () {
   }
   this.col += ( this.c - start );
 };
-lp . opAddMin = function(peek) {
-        var c = this.c, assig = false, l = this.src ;
-        c++ ;
-        var r = l.charCodeAt ( c ) ;
-        this.ltcontents = this.src.slice(this.c,c)  ;
-        this.lttype = assig ? '=' : this.ltcontents ;
-        this.c=c;
-        this.prec= 0xA7 ; 
-}
 lp.skipS = function() {
      var c = this.c,
          l = this.src,
@@ -103,25 +105,6 @@ lp.skipS = function() {
      } 
   this.col += (c-start ) ;
   this.c = c ;
-};
-lp.readAnIdentifierToken = function ( v ) {
-   if ( !v ) {
-     this.li0 = this.li;
-     this.col0 = this.col;
-     this.c0 = this.c;
-    }
-    var c = this.c,
-        l = this.src,
-        e = (l.length),
-        peek ,
-        r ,
-        n = c + 1 ; // the head is already supplied in v
-    while ( ++c  < e ) {
-      if ( IDBody( peek = l.charCodeAt(c) ) ) continue;
-      break ;
-    }
-    this.c = c;
-    this.lttype= 'Identifier'   ;
 };
 lp.readMisc = function () {  this.ltcontents = this.lttype = this.  src.   charAt (   this.c ++  )    ; };
 lp.semiLoc = function () {
@@ -174,20 +157,8 @@ lp.tok = function() {
 }
 lp.parseProgram = function () {
   this.next() ;
-  var prog = this.blck() ;
-  var e0   = null,             e   =     null  ;
-  if ( prog.length ) { e0 = prog[ 0 ]; e       =   prog[ prog . length  -1    ]  ; }
-  prog = ({
-      type: 'Program',
-      body: prog,
-    start : e0 ? e0 . start :  0,
-      end : e  ? e  .   end :  this.c ,
-      sourceType : false ? "module" : "script",
-      loc:  { start: e0 ? e0 . loc. start :  { line: 1, column: 0 }  , end :   (       e   ?      e.loc.end  :   {   line: this.li , column : this.col }   )   }
-
-   });
-   this.next()
-   return prog ;
+  this.blck() ;
+  this.next()
 };
 lp.blck = function () { // blck ([]stmt)
   var stmts = [], stmt;
