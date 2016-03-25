@@ -1,5 +1,4 @@
- ( function() {
-   'use strict'
+'use strict'
 
 var Parser = function (src) {
 
@@ -84,20 +83,7 @@ var    funcFlag = 2 ,
        methdFlag = yieldFlag << 1 , 
        yieldFlag = continueFlag << 1 ; 
 
-var g_o =        2 , g_ = 'g'.charCodeAt( 0 ) ,
-    u_o = g_o << 1 , u_ = 'u'.charCodeAt( 0 ) , 
-    y_o = u_o << 1 , y_ = 'y'.charCodeAt( 0 ) ,
-    m_o = y_o << 2 , m_ = 'm'.charCodeAt( 0 ) ,
-    i_o = m_o << 2 , i_ = 'i'.charCodeAt( 0 ) ;
-
-var ALL = 0;
-
-try { new RegExp ( "lube", "g" ) ; ALL |= g_o ; } catch ( _r ) {}
-try { new RegExp ( "lube", "u" ) ; ALL |= u_o ; } catch ( _r ) {} 
-try { new RegExp ( "lube", "y" ) ; ALL |= y_o ; } catch ( _r ) {} 
-try { new RegExp ( "lube", "m" ) ; ALL |= m_o ; } catch ( _r ) {} 
-try { new RegExp ( "lube", "i" ) ; ALL |= i_o ; } catch ( _r ) {}
-
+var ALL = 162;
 
 var nameInit = 2 ,
     nameGet = nameInit << 2 ,
@@ -154,7 +140,7 @@ var _h = function(n) { return n.toString(0x010 ) ; }
 var lp = Parser.prototype;
 var has   = Object.prototype.hasOwnProperty;
 
-lp.nextraw = function () {
+lp.next = function () {
   if ( this.skipS() ) return;
   if (this.c >= this.src.length) {
       this. lttype =  'eof' ;
@@ -211,7 +197,6 @@ lp.nextraw = function () {
         if (_bs == peek) {
           mustBeAnID = 1 ;
           peek = l.charCodeAt(++ this. c);
-          if (peek != _u) this.err('u');
           peek = this.peekUSeq();
         }
         if (peek >= 0x0D800 && peek <= 0x0DBFF ) {
@@ -220,8 +205,6 @@ lp.nextraw = function () {
             peek = ((peek - 0x0D800)<<10) + ( r-0x0DC00) + (0x010000) ;
         }
         if (mustBeAnID) {
-            if (!IDHead(peek))
-                this.err('a ' + mustBeAnID + ' sequence in identifier head position must belong to IDStart group, but it (' + _h(peek) + ') does not');
             this.readAnIdentifierToken( mustBeAnID == (2) ? (String.fromCharCode ( peek, r ) ) : String.fromCharCode ( peek) ); 
         }
  
@@ -304,19 +287,6 @@ lp.readAnIdentifierToken = function ( v ) {
 
 
 lp.readMisc = function () {  this.ltcontents = this.lttype = this.  src.   charAt (   this.c ++  )    ; };
-
- 
-lp.resv = function() { this.err ( this. ltcontents + ' is not an identifier '   )  ; }
-lp.next = lp. nextraw ;
-lp.expect = function (n) {
-  if (this .ltcontents == n) {
-     this.next  () ;
-     return;
-  }
-  this.err( '\'' + n + '\' expected; found <' + this .lttype + '>' ,e);
-};
-
-lp.err = function (n) { throw new Error(n) ; };
 lp.semiLoc = function () {
   switch (this.lttype) {
     case ';': var n = this.loc() ;   this.next () ;  return n  ;
@@ -324,10 +294,8 @@ lp.semiLoc = function () {
     case '}':
       return this. locOn   ( 1   )                                    ;
   }
-  if (this.hasL) return null ;
-  this.err('EOS expected; found ' + this.ltcontents ) ;
+  return null ;
 };
-
 lp . semiI = function() { return this. ltcontents == ';' ? this.c : 0 ;  }
 lp . loc      = function()  { return  { line: this.li , column: this.col       }; }
 lp . locBegin = function()  { return  { line: this.li0, column: this.col0      }; }
@@ -385,7 +353,7 @@ lp.parseProgram = function () {
       loc:  { start: e0 ? e0 . loc. start :  { line: 1, column: 0 }  , end :   (       e   ?      e.loc.end  :   {   line: this.li , column : this.col }   )   }
 
    });
-   this.expect('<<EOF>>')
+   this.next()
    return prog ;
 };
 
@@ -411,19 +379,17 @@ lp.parseStatement = function ( nullNo       ) {
     case 'eof': return;
   }
 
-  var head = this.parseExprHeadOrYield (0);
+  var head = this.parseExprHead (0);
   if ( !head ) {
-    if ( nullNo ) this.err ( 'Unexpected ' + this. ltcontents   )  ;
     return ;
   }
   if (this.foundStmt) { this.foundStmt = false; return head; } 
 
-  head = this .parseExpr(head, 0 ) ;
+  head = this .parseNonSeqExpr(head, 0, 0 ) ;
   if (head .type == 'Identifier' && this.lttype == ':') {
      this.next() ;
      l = head.value  ;    
      l += '%';
-     if ( has.call ( this.lbn,  l ) && this.lbn[l] != -1 )  this.err( 'label already exists ' + ( l.substr(0 , l.length ) ) ) ;
      this.lbn[l] = this. iteD; 
      e  = this.parseStatement();
      this.lbn[l]                = -1    ;
@@ -461,64 +427,24 @@ lp.parseBlckStatement = function () {
           end : this.c ,
         loc   :{ start : startLoc , end :   this.loc   ()  } 
   }
-  this.expect('}' );
+  this.next();
   return n;
 };
 
-lp.parseExpr = function ( head, cf ) {
-  head = this.parseNonSeqExpr(
-    head || this.parseExprHeadOrYield (cf) || this.err('Unexpected '  + this.ltcontents ),
-    0,
-    cf
-  );
-  var n;
-  if ( this.lttype == ',' ) {
-    var e = [core(head)  ] ;
-    do {
-      this.next() ;
-      n = this.parseNonSeqExpr( this. parseExprHeadOrYield(cf), 0, cf );
-      e.push(core(n) ); 
-    } while (this.lttype == ',' ) ;
-
-    return  {
-         type : 'SequenceExpression',
-         expressions : e ,
-        start :  head.start ,
-          end :  n.end                             , 
-         loc: { start : head.loc.start, end : n.loc.end }
-    } 
-  }
-
-  return head ;
-};
-
 lp.parseNonSeqExpr = function (head, breakIfLessThanThis , cFlags_For ) {
-  if (!head) this.err( 'Unexpected ' + this .lttype );
   var n ;
   var _b = null  , _e = null  ; 
 
   var hasPrefixOrPostfix = false, prec, o, precOrAssocDistance;
-  switch (head.type ) {
-    case  'UpdateExpression'  :
-      hasPrefixOrPostfix = !false ;
-      break ;
 
-    case 'yield' :
-      if ( ! ( this.scopeFlags & yieldFlag ) ) this.err ( 'yield must not be there ' ) ;
-      else return this. parseY() 
-  }
-
-  EXPR:
   while (!false) {
     switch (this.lttype) {
       case '-' :
       case 'op' :
-         prec = this . prec;
          break ;
 
      default:
         return head;
-
     }
     precOrAssocDistance = prec - breakIfLessThanThis;
     if (precOrAssocDistance != 0 ? precOrAssocDistance < 0 : (prec & 1)) return head;
@@ -537,15 +463,6 @@ lp.parseNonSeqExpr = function (head, breakIfLessThanThis , cFlags_For ) {
  }
 };
 
-lp . parseExprHeadOrYield = function ( cFlags_For_Sh_Non ) {
-    if (  this. idcontents =='yield'  )  return this. parseY   ( cFlags_For_Sh_Non & cfFor )   ;
-    return this. parseExprHead (cFlags_For_Sh_Non ) ; 
-};
-
-lp. parseStatementOrID = function ( cFlags_For_Sh_Non_Ex ) {
-  return this.id();
-};
-
 lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
   var head;
   var _c ; 
@@ -553,7 +470,7 @@ lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
   var e   ;
 
   if ( this . lttype == 'Identifier' ) {
-      head = this.parseStatementOrID ( cFlags_For_Sh_Non_Ex  ) ; 
+      head = this.id () ; 
       if ( this.foundStmt ) { return head ; } 
   }
 
@@ -602,5 +519,3 @@ var run = 120; while ( run    ) {
    new Parser((tok)).parseProgram() ;
    run -- ; 
 }
-
- }) ()
