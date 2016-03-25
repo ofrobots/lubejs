@@ -3,37 +3,19 @@
 var Parser = function (src) {
   this.peek = 0;
   this.n = 0;
-  this.hasL = false;
-  this.lbn = {};
-  this.tight = false;
   this.src = src;
   this.col = 0;
   this.c = 0;
   this.li = 1;
-  this.isScript = !false;
   this.v        = 12 ;  
-  this.scopeFlags = 0; 
   this.foundStmt = false;
-  this.foundExpr = false ; 
-  this.canHaveNoAssig = false ;
-  this. propThatMustBeInAnAssig = null ;
-  this. mustNot = false ;
-//  this. names = {}
-  this. iteD= 0;
   this. i   =       null ; 
-  this. ltval = null;
   this. lttype= "";
   this. ltcontents = "" ;
   this.prec = 0 ;
-  this. idcontents = "" ; 
   this.li0 = 0;
   this.col0 = 0;
   this.c0 = 0;
-  this. prev     = []  ;
-  this. argList  = null;
-  this. argListIsActive= false ;
-  this.funcBecause = null ;
-  this.convErr = "" ;
 };
 var _c = function (c) { return c.charCodeAt(0); };
 var _1 = _c ( '1' ),
@@ -98,7 +80,6 @@ lp.next = function () {
       l = this.src,
       peek,
       start =  c;
-  this.idcontents = "" ;
   peek  = this.src.charCodeAt(start);
   if ( IDHead(peek) )this.readAnIdentifierToken('');
   else if (Num(peek))this.readNumberLiteral(peek);
@@ -155,13 +136,11 @@ lp.skipS = function() {
          default :
             this.col += (c-start ) ;
             this.c=c;
-            this.hasL = false;
             return ;
        }
      } 
   this.col += (c-start ) ;
   this.c = c ;
-  this.hasL = false; 
 };
 lp.readAnIdentifierToken = function ( v ) {
    if ( !v ) {
@@ -186,7 +165,7 @@ lp.readMisc = function () {  this.ltcontents = this.lttype = this.  src.   charA
 lp.semiLoc = function () {
   switch (this.lttype) {
     case ';': var n = this.loc() ;   this.next () ;  return n  ;
-    case 'eof': return this.hasL ? null : this.loc ()      ;
+    case 'eof': return this.loc();
     case '}':
       return this. locOn   ( 1   )                                    ;
   }
@@ -199,7 +178,7 @@ lp . locOn    = function(l) { return  { line: this.li, column: this.col - l  }; 
 lp . numstr    =   function () {
   var n = {
     type : 'Literal',
-   value : this.ltval , 
+   value : null, 
    start : this.c0,
      end : this.c,
    loc : { start : this.locBegin() , end    : this.loc() } ,
@@ -241,7 +220,7 @@ lp.parseProgram = function () {
       body: prog,
     start : e0 ? e0 . start :  0,
       end : e  ? e  .   end :  this.c ,
-      sourceType :   !   this.isScript ?  "module"     : (  "script"   )  ,       
+      sourceType : false ? "module" : "script",
       loc:  { start: e0 ? e0 . loc. start :  { line: 1, column: 0 }  , end :   (       e   ?      e.loc.end  :   {   line: this.li , column : this.col }   )   }
 
    });
@@ -329,12 +308,12 @@ lp.parseExprHead = function (cFlags_For_Sh_Non_Ex ) {
 } ;
 lp.id = function () {
    var e = {  type   : 'Identifier' ,
-             value   : this.ltval ,
+             value   : null,
             start    : this.c0,
                end   : this.c , 
             loc      : { start : this.locBegin   ()  ,
                          end :   this.loc        ()   } ,
-           contents  : this. ltval                               ,
+           contents  : null                               ,
               pDepth : 0 ,
    };
    this.next   () ;
